@@ -4,8 +4,10 @@
 #include <QtWidgets/QWidget>
 
 class MpvWidget;
+class Slideshow;
 class QSlider;
 class QPushButton;
+
 class MainWindow : public QWidget
 {
     Q_OBJECT
@@ -19,10 +21,11 @@ private slots:
     void setSliderRange(int duration);
     void openDialog();
 private:
-    MpvWidget *m_mpv;
-    QSlider *m_slider;
-    QPushButton *m_openBtn;
-    QPushButton *m_playBtn;
+    MpvWidget *mpv;
+    QSlider *slider;
+    QPushButton *openBtn;
+    QPushButton *playBtn;
+    Slideshow *slideshow;
 };
 
 #endif // MainWindow_H

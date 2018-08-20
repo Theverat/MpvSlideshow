@@ -7,7 +7,9 @@ PKGCONFIG += mpv
 
 HEADERS = \
     mpvwidget.h \
-    mainwindow.h
+    mainwindow.h \
+    slideshow.h
 SOURCES = main.cpp \
     mpvwidget.cpp \
-    mainwindow.cpp
+    mainwindow.cpp \
+    slideshow.cpp

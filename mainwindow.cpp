@@ -1,54 +1,60 @@
+
 #include "mainwindow.h"
 #include "mpvwidget.h"
+#include "slideshow.h"
+
 #include <QPushButton>
 #include <QSlider>
 #include <QLayout>
 #include <QFileDialog>
 
 MainWindow::MainWindow(QWidget *parent) 
-    : QWidget(parent) 
+    : QWidget(parent)
 {
-    m_mpv = new MpvWidget(this);
-    m_slider = new QSlider();
-    m_slider->setOrientation(Qt::Horizontal);
-    m_openBtn = new QPushButton("Open");
-    m_playBtn = new QPushButton("Pause");
+    mpv = new MpvWidget(this);
+    slideshow = new Slideshow(mpv, this);
+    
+    slider = new QSlider();
+    slider->setOrientation(Qt::Horizontal);
+    openBtn = new QPushButton("Open");
+    playBtn = new QPushButton("Pause");
     QHBoxLayout *hb = new QHBoxLayout();
-    hb->addWidget(m_openBtn);
-    hb->addWidget(m_playBtn);
+    hb->addWidget(openBtn);
+    hb->addWidget(playBtn);
     QVBoxLayout *vl = new QVBoxLayout();
-    vl->addWidget(m_mpv);
-    vl->addWidget(m_slider);
+    vl->addWidget(mpv);
+    vl->addWidget(slider);
     vl->addLayout(hb);
     setLayout(vl);
-    connect(m_slider, SIGNAL(sliderMoved(int)), SLOT(seek(int)));
-    connect(m_openBtn, SIGNAL(clicked()), SLOT(openDialog()));
-    connect(m_playBtn, SIGNAL(clicked()), SLOT(pauseResume()));
-    connect(m_mpv, SIGNAL(positionChanged(int)), m_slider, SLOT(setValue(int)));
-    connect(m_mpv, SIGNAL(durationChanged(int)), this, SLOT(setSliderRange(int)));
+    
+    connect(slider, SIGNAL(sliderMoved(int)), SLOT(seek(int)));
+    connect(openBtn, SIGNAL(clicked()), SLOT(openDialog()));
+    connect(playBtn, SIGNAL(clicked()), SLOT(pauseResume()));
+    connect(mpv, SIGNAL(positionChanged(int)), slider, SLOT(setValue(int)));
+    connect(mpv, SIGNAL(durationChanged(int)), this, SLOT(setSliderRange(int)));
 }
 
 //------------------------------------------------------------------
 // public slots
 
 void MainWindow::open(QString path) {
-    m_mpv->command(QStringList() << "loadfile" << path);
+    mpv->command(QStringList() << "loadfile" << path);
 }
 
 void MainWindow::seek(int pos) {
-    m_mpv->command(QVariantList() << "seek" << pos << "absolute");
+    mpv->command(QVariantList() << "seek" << pos << "absolute");
 }
 
 void MainWindow::pauseResume() {
-    const bool paused = m_mpv->getProperty("pause").toBool();
-    m_mpv->setProperty("pause", !paused);
+    const bool paused = mpv->getProperty("pause").toBool();
+    mpv->setProperty("pause", !paused);
 }
 
 //------------------------------------------------------------------
 // private slots
 
 void MainWindow::setSliderRange(int duration) {
-    m_slider->setRange(0, duration);
+    slider->setRange(0, duration);
 }
 
 // Show a directory selection dialog and open the images in the chosen directory

@@ -8,6 +8,7 @@
 // debug
 #include <QDebug>
 #include <QElapsedTimer>
+#include <cmath> // sin
 
 
 QElapsedTimer t;
@@ -124,7 +125,7 @@ void MpvWidget::paintGL() {
     }
     glEnd();
     glDisable(GL_BLEND);
-    glColor4f(1.f, 1.f, 1.f, 1.f);    
+    glColor4f(1.f, 1.f, 1.f, 1.f);
 }
 
 void MpvWidget::swapped() {
