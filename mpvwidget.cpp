@@ -8,6 +8,7 @@
 #include <QElapsedTimer>
 
 QElapsedTimer t;
+qint64 last = 0;
 
 static void wakeup(void *ctx)
 {
@@ -29,7 +30,9 @@ MpvWidget::MpvWidget(QWidget *parent, Qt::WindowFlags f)
     mpv = mpv::qt::Handle::FromRawHandle(mpv_create());
     if (!mpv)
         throw std::runtime_error("could not create mpv context");
-
+    
+    mpv_set_option_string(mpv, "video-timing-offset", "0");
+    
     mpv_set_option_string(mpv, "terminal", "yes");
     mpv_set_option_string(mpv, "msg-level", "all=v");
     if (mpv_initialize(mpv) < 0)
@@ -51,7 +54,7 @@ MpvWidget::MpvWidget(QWidget *parent, Qt::WindowFlags f)
     mpv_observe_property(mpv, 0, "time-pos", MPV_FORMAT_DOUBLE);
     mpv_set_wakeup_callback(mpv, wakeup, this);
     
-    t.start();
+    t.start();    
 }
 
 MpvWidget::~MpvWidget()
@@ -92,6 +95,10 @@ void MpvWidget::initializeGL()
 
 void MpvWidget::paintGL()
 {
+    qint64 elapsed = t.elapsed();
+    qDebug() << "paint" << elapsed / 1000.f << "frametime:" << elapsed- last;
+    last = elapsed;
+    
     if (width() != fbo->width() || height() != fbo->height()) {
         delete fbo;
         fbo = new QOpenGLFramebufferObject(width(), height());
@@ -109,7 +116,7 @@ void MpvWidget::paintGL()
     
     glEnable(GL_BLEND);
     glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
-    const float alpha = sin(t.elapsed() / 1000.f) * 0.5f + 0.5f;
+    const float alpha = sin(elapsed / 1000.f) * 0.5f + 0.5f;
     glColor4f(0.f, 0.f, 0.f, alpha);
     glBegin(GL_QUADS);
     {
@@ -163,6 +170,8 @@ void MpvWidget::paintGL()
 void MpvWidget::swapped()
 {
     mpv_opengl_cb_report_flip(mpv_gl, 0);
+    // Immediately schedule the next paintGL() call
+    update();
 }
 
 void MpvWidget::on_mpv_events()

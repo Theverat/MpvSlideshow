@@ -53,6 +53,10 @@ void MainWindow::setSliderRange(int duration) {
 
 // Show a directory selection dialog and open the images in the chosen directory
 void MainWindow::openDialog() {
+    // test
+//    open("/home/simon/Videos/vsync tearing test-9hIRq5HTh5s.mp4");
+//    return;
+    
     QFileDialog dialog(this);
     dialog.setFileMode(QFileDialog::Directory);
     dialog.setDirectory(QDir::homePath());
