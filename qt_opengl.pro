@@ -13,3 +13,6 @@ SOURCES = main.cpp \
     mpvwidget.cpp \
     mainwindow.cpp \
     slideshow.cpp
+
+FORMS += \
+    mainwindow.ui

@@ -1,5 +1,6 @@
 
 #include "mainwindow.h"
+#include "ui_mainwindow.h"
 #include "mpvwidget.h"
 #include "slideshow.h"
 
@@ -9,29 +10,37 @@
 #include <QFileDialog>
 
 MainWindow::MainWindow(QWidget *parent) 
-    : QWidget(parent)
+    : QMainWindow(parent),
+      ui(new Ui::MainWindow)
 {
-    mpv = new MpvWidget(this);
-    slideshow = new Slideshow(mpv, this);
+    ui->setupUi(this);
     
-    slider = new QSlider();
-    slider->setOrientation(Qt::Horizontal);
-    openBtn = new QPushButton("Open");
-    playBtn = new QPushButton("Pause");
-    QHBoxLayout *hb = new QHBoxLayout();
-    hb->addWidget(openBtn);
-    hb->addWidget(playBtn);
-    QVBoxLayout *vl = new QVBoxLayout();
-    vl->addWidget(mpv);
-    vl->addWidget(slider);
-    vl->addLayout(hb);
-    setLayout(vl);
+//    mpv = new MpvWidget(this);
+    slideshow = new Slideshow(ui->mpvWidget, this);
     
-    connect(slider, SIGNAL(sliderMoved(int)), SLOT(seek(int)));
-    connect(openBtn, SIGNAL(clicked()), SLOT(openDialog()));
-    connect(playBtn, SIGNAL(clicked()), SLOT(pauseResume()));
-    connect(mpv, SIGNAL(positionChanged(int)), slider, SLOT(setValue(int)));
-    connect(mpv, SIGNAL(durationChanged(int)), this, SLOT(setSliderRange(int)));
+//    slider = new QSlider();
+//    slider->setOrientation(Qt::Horizontal);
+//    openBtn = new QPushButton("Open");
+//    playBtn = new QPushButton("Pause");
+//    QHBoxLayout *hb = new QHBoxLayout();
+//    hb->addWidget(openBtn);
+//    hb->addWidget(playBtn);
+//    QVBoxLayout *vl = new QVBoxLayout();
+//    vl->addWidget(mpv);
+//    vl->addWidget(slider);
+//    vl->addLayout(hb);
+//    setLayout(vl);
+    
+//    connect(slider, SIGNAL(sliderMoved(int)), SLOT(seek(int)));
+//    connect(openBtn, SIGNAL(clicked()), SLOT(openDialog()));
+//    connect(playBtn, SIGNAL(clicked()), SLOT(pauseResume()));
+//    connect(mpv, SIGNAL(positionChanged(int)), slider, SLOT(setValue(int)));
+//    connect(mpv, SIGNAL(durationChanged(int)), this, SLOT(setSliderRange(int)));
+}
+
+MainWindow::~MainWindow()
+{
+    delete ui;
 }
 
 //------------------------------------------------------------------

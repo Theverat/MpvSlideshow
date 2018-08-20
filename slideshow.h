@@ -21,7 +21,7 @@ public slots:
     
 private:
     MpvWidget *mpv;
-    float imageDuration = 1.f;
+    float imageDuration = 7.f;
 };
 
 #endif // SLIDESHOW_H
