@@ -12,11 +12,12 @@ class MainWindow : public QWidget
 public:
     explicit MainWindow(QWidget *parent = 0);
 public Q_SLOTS:
-    void openMedia();
+    void open(QString path);
     void seek(int pos);
     void pauseResume();
 private Q_SLOTS:
     void setSliderRange(int duration);
+    void openDialog();
 private:
     MpvWidget *m_mpv;
     QSlider *m_slider;
