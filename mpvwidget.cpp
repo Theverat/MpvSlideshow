@@ -1,11 +1,14 @@
+
 #include "mpvwidget.h"
+
 #include <stdexcept>
+
 #include <QtGui/QOpenGLContext>
 #include <QtCore/QMetaObject>
+// debug
 #include <QDebug>
-#include <QOpenGLFramebufferObject>
-#include <QDateTime>
 #include <QElapsedTimer>
+
 
 QElapsedTimer t;
 qint64 last = 0;
@@ -21,6 +24,7 @@ static void *get_proc_address(void *ctx, const char *name) {
         return NULL;
     return (void *)glctx->getProcAddress(QByteArray(name));
 }
+
 
 MpvWidget::MpvWidget(QWidget *parent, Qt::WindowFlags f)
     : QOpenGLWidget(parent, f)
@@ -79,6 +83,8 @@ QVariant MpvWidget::getProperty(const QString &name) const {
 }
 
 void MpvWidget::initializeGL() {
+    initializeOpenGLFunctions();
+    
     int r = mpv_opengl_cb_init_gl(mpv_gl, NULL, get_proc_address, NULL);
     if (r < 0)
         throw std::runtime_error("could not initialize OpenGL");

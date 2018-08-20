@@ -11,11 +11,11 @@ class MainWindow : public QWidget
     Q_OBJECT
 public:
     explicit MainWindow(QWidget *parent = 0);
-public Q_SLOTS:
+public slots:
     void open(QString path);
     void seek(int pos);
     void pauseResume();
-private Q_SLOTS:
+private slots:
     void setSliderRange(int duration);
     void openDialog();
 private:

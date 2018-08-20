@@ -2,11 +2,14 @@
 #define PLAYERWINDOW_H
 
 #include <QtWidgets/QOpenGLWidget>
+#include <QOpenGLFunctions>
+
 #include <mpv/client.h>
 #include <mpv/opengl_cb.h>
 #include <mpv/qthelper.hpp>
 
-class MpvWidget Q_DECL_FINAL: public QOpenGLWidget
+
+class MpvWidget Q_DECL_FINAL: public QOpenGLWidget, protected QOpenGLFunctions
 {
     Q_OBJECT
 public:
@@ -16,13 +19,13 @@ public:
     void setProperty(const QString& name, const QVariant& value);
     QVariant getProperty(const QString& name) const;
     QSize sizeHint() const { return QSize(480, 270);}
-Q_SIGNALS:
+signals:
     void durationChanged(int value);
     void positionChanged(int value);
 protected:
     void initializeGL() Q_DECL_OVERRIDE;
     void paintGL() Q_DECL_OVERRIDE;
-private Q_SLOTS:
+private slots:
     void swapped();
     void on_mpv_events();
     void maybeUpdate();
