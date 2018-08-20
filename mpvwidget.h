@@ -6,8 +6,6 @@
 #include <mpv/opengl_cb.h>
 #include <mpv/qthelper.hpp>
 
-class QOpenGLFramebufferObject;
-
 class MpvWidget Q_DECL_FINAL: public QOpenGLWidget
 {
     Q_OBJECT
@@ -34,7 +32,6 @@ private:
 
     mpv::qt::Handle mpv;
     mpv_opengl_cb_context *mpv_gl;
-    QOpenGLFramebufferObject *fbo;
 };
 
 

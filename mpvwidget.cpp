@@ -10,8 +10,7 @@
 QElapsedTimer t;
 qint64 last = 0;
 
-static void wakeup(void *ctx)
-{
+static void wakeup(void *ctx) {
     QMetaObject::invokeMethod((MpvWidget*)ctx, "on_mpv_events", Qt::QueuedConnection);
 }
 
@@ -24,13 +23,13 @@ static void *get_proc_address(void *ctx, const char *name) {
 }
 
 MpvWidget::MpvWidget(QWidget *parent, Qt::WindowFlags f)
-    : QOpenGLWidget(parent, f),
-      fbo(NULL)
+    : QOpenGLWidget(parent, f)
 {    
     mpv = mpv::qt::Handle::FromRawHandle(mpv_create());
     if (!mpv)
         throw std::runtime_error("could not create mpv context");
     
+    // Decouple our fps from the video being played
     mpv_set_option_string(mpv, "video-timing-offset", "0");
     
     mpv_set_option_string(mpv, "terminal", "yes");
@@ -57,8 +56,7 @@ MpvWidget::MpvWidget(QWidget *parent, Qt::WindowFlags f)
     t.start();    
 }
 
-MpvWidget::~MpvWidget()
-{
+MpvWidget::~MpvWidget() {
     makeCurrent();
     if (mpv_gl)
         mpv_opengl_cb_set_update_callback(mpv_gl, NULL, NULL);
@@ -68,47 +66,35 @@ MpvWidget::~MpvWidget()
     mpv_opengl_cb_uninit_gl(mpv_gl);
 }
 
-void MpvWidget::command(const QVariant& params)
-{
+void MpvWidget::command(const QVariant& params) {
     mpv::qt::command_variant(mpv, params);
 }
 
-void MpvWidget::setProperty(const QString& name, const QVariant& value)
-{
+void MpvWidget::setProperty(const QString& name, const QVariant& value) {
     mpv::qt::set_property_variant(mpv, name, value);
 }
 
-QVariant MpvWidget::getProperty(const QString &name) const
-{
+QVariant MpvWidget::getProperty(const QString &name) const {
     return mpv::qt::get_property_variant(mpv, name);
 }
 
-void MpvWidget::initializeGL()
-{
+void MpvWidget::initializeGL() {
     int r = mpv_opengl_cb_init_gl(mpv_gl, NULL, get_proc_address, NULL);
     if (r < 0)
         throw std::runtime_error("could not initialize OpenGL");
-    
-    delete fbo;
-    fbo = new QOpenGLFramebufferObject(4, 4);
 }
 
-void MpvWidget::paintGL()
-{
+void MpvWidget::paintGL() {
     qint64 elapsed = t.elapsed();
     qDebug() << "paint" << elapsed / 1000.f << "frametime:" << elapsed- last;
     last = elapsed;
     
-    if (width() != fbo->width() || height() != fbo->height()) {
-        delete fbo;
-        fbo = new QOpenGLFramebufferObject(width(), height());
-    }
+    mpv_opengl_cb_draw(mpv_gl, defaultFramebufferObject(), width(), -height());
+    // mpv has bound its own fbo, rebind the fbo of this OpenGLWidget
+    makeCurrent();
     
-    mpv_opengl_cb_draw(mpv_gl, fbo->handle(), width(), -height());
+    // Draw my custom overlay
     
-    // Draw my custom overlay into FBO
-    
-    fbo->bind();
     glMatrixMode(GL_MODELVIEW);
     glLoadIdentity();
     glMatrixMode(GL_PROJECTION);
@@ -117,7 +103,7 @@ void MpvWidget::paintGL()
     glEnable(GL_BLEND);
     glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
     const float alpha = sin(elapsed / 1000.f) * 0.5f + 0.5f;
-    glColor4f(0.f, 0.f, 0.f, alpha);
+    glColor4f(1.f, 0.f, 0.f, alpha);
     glBegin(GL_QUADS);
     {
         const float offset_x = 0.f;
@@ -132,50 +118,16 @@ void MpvWidget::paintGL()
     }
     glEnd();
     glDisable(GL_BLEND);
-    glColor4f(1.f, 1.f, 1.f, 1.f);
-    fbo->release();
-    
-    // Draw FBO on quad
-    
-    glEnable(GL_TEXTURE_2D);
-    glEnable(GL_COLOR_MATERIAL);
-    glBindTexture(GL_TEXTURE_2D, fbo->texture());
-    
-    glBegin(GL_QUADS);
-    {
-        const float offset_x = -1.f;
-        const float offset_y = -1.f;
-        const float width = 2.f;
-        const float height = 2.f;
-        
-        glTexCoord2f(0, 0);
-        glVertex2f(offset_x, offset_y);
-    
-        glTexCoord2f(1, 0);
-        glVertex2f(offset_x + width, offset_y);
-    
-        glTexCoord2f(1, 1);
-        glVertex2f(offset_x + width, offset_y + height);
-    
-        glTexCoord2f(0, 1);
-        glVertex2f(offset_x, offset_y + height);
-    }
-    glEnd();
-    
-    glDisable(GL_COLOR_MATERIAL);
-    glDisable(GL_TEXTURE_2D);
-    
+    glColor4f(1.f, 1.f, 1.f, 1.f);    
 }
 
-void MpvWidget::swapped()
-{
+void MpvWidget::swapped() {
     mpv_opengl_cb_report_flip(mpv_gl, 0);
     // Immediately schedule the next paintGL() call
     update();
 }
 
-void MpvWidget::on_mpv_events()
-{
+void MpvWidget::on_mpv_events() {
     // Process all events, until the event queue is empty.
     while (mpv) {
         mpv_event *event = mpv_wait_event(mpv, 0);
@@ -186,8 +138,7 @@ void MpvWidget::on_mpv_events()
     }
 }
 
-void MpvWidget::handle_mpv_event(mpv_event *event)
-{
+void MpvWidget::handle_mpv_event(mpv_event *event) {
     switch (event->event_id) {
     case MPV_EVENT_PROPERTY_CHANGE: {
         mpv_event_property *prop = (mpv_event_property *)event->data;
@@ -210,8 +161,7 @@ void MpvWidget::handle_mpv_event(mpv_event *event)
 }
 
 // Make Qt invoke mpv_opengl_cb_draw() to draw a new/updated video frame.
-void MpvWidget::maybeUpdate()
-{
+void MpvWidget::maybeUpdate() {
     // If the Qt window is not visible, Qt's update() will just skip rendering.
     // This confuses mpv's opengl-cb API, and may lead to small occasional
     // freezes due to video rendering timing out.
@@ -230,7 +180,6 @@ void MpvWidget::maybeUpdate()
     }
 }
 
-void MpvWidget::on_update(void *ctx)
-{
+void MpvWidget::on_update(void *ctx) {
     QMetaObject::invokeMethod((MpvWidget*)ctx, "maybeUpdate");
 }
