@@ -23,4 +23,6 @@ I successfully compiled on Linux and Windows.
 * Hide controls and cursor when mouse cursor is not moved for a while
 * Add keyboard shortcuts
 * Add help dialog
+* Rotate images according to their EXIF data
+* Do not throw away the playlist when it ends
 
