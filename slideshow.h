@@ -15,6 +15,7 @@ public:
 public slots:
     void resume();
     void pause();
+    bool togglePause();
     void next();
     void previous();
     void setImageDuration(float seconds);

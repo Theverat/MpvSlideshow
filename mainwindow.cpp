@@ -16,6 +16,7 @@ MainWindow::MainWindow(QWidget *parent)
     ui->setupUi(this);
     
 //    mpv = new MpvWidget(this);
+    mpv = ui->mpvWidget; // todo remove
     slideshow = new Slideshow(ui->mpvWidget, this);
     
 //    slider = new QSlider();
@@ -36,6 +37,12 @@ MainWindow::MainWindow(QWidget *parent)
 //    connect(playBtn, SIGNAL(clicked()), SLOT(pauseResume()));
 //    connect(mpv, SIGNAL(positionChanged(int)), slider, SLOT(setValue(int)));
 //    connect(mpv, SIGNAL(durationChanged(int)), this, SLOT(setSliderRange(int)));
+    
+    connect(ui->open, SIGNAL(released()), this, SLOT(openDialog()));
+    connect(ui->prev, SIGNAL(released()), slideshow, SLOT(previous()));
+    connect(ui->togglePause, SIGNAL(released()), this, SLOT(togglePause()));
+    connect(ui->next, SIGNAL(released()), slideshow, SLOT(next()));
+    
 }
 
 MainWindow::~MainWindow()
@@ -54,16 +61,16 @@ void MainWindow::seek(int pos) {
     mpv->command(QVariantList() << "seek" << pos << "absolute");
 }
 
-void MainWindow::pauseResume() {
-    const bool paused = mpv->getProperty("pause").toBool();
-    mpv->setProperty("pause", !paused);
+void MainWindow::togglePause() {
+    const bool paused = slideshow->togglePause();
+    ui->togglePause->setText(paused ? "Resume" : "Pause");
 }
 
 //------------------------------------------------------------------
 // private slots
 
 void MainWindow::setSliderRange(int duration) {
-    slider->setRange(0, duration);
+//    slider->setRange(0, duration);
 }
 
 // Show a directory selection dialog and open the images in the chosen directory

@@ -30,6 +30,7 @@ static void *get_proc_address(void *ctx, const char *name) {
 MpvWidget::MpvWidget(QWidget *parent, Qt::WindowFlags f)
     : QOpenGLWidget(parent, f)
 {    
+    qDebug() << "constructor";
     mpv = mpv::qt::Handle::FromRawHandle(mpv_create());
     if (!mpv)
         throw std::runtime_error("could not create mpv context");
@@ -93,7 +94,7 @@ void MpvWidget::initializeGL() {
 
 void MpvWidget::paintGL() {
     qint64 elapsed = t.elapsed();
-    qDebug() << "paint" << elapsed / 1000.f << "frametime:" << elapsed- last;
+//    qDebug() << "paint" << elapsed / 1000.f << "frametime:" << elapsed- last;
     last = elapsed;
     
     mpv_opengl_cb_draw(mpv_gl, defaultFramebufferObject(), width(), -height());
@@ -152,12 +153,12 @@ void MpvWidget::handle_mpv_event(mpv_event *event) {
         if (strcmp(prop->name, "time-pos") == 0) {
             if (prop->format == MPV_FORMAT_DOUBLE) {
                 double time = *(double *)prop->data;
-                Q_EMIT positionChanged(time);
+                emit positionChanged(time);
             }
         } else if (strcmp(prop->name, "duration") == 0) {
             if (prop->format == MPV_FORMAT_DOUBLE) {
                 double time = *(double *)prop->data;
-                Q_EMIT durationChanged(time);
+                emit durationChanged(time);
             }
         }
         break;

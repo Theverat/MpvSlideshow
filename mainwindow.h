@@ -23,7 +23,7 @@ public:
 public slots:
     void open(QString path);
     void seek(int pos);
-    void pauseResume();
+    void togglePause();
     
 private slots:
     void setSliderRange(int duration);

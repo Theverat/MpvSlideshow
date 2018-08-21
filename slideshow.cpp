@@ -21,12 +21,18 @@ void Slideshow::pause() {
     mpv->setProperty("pause", true);
 }
 
+bool Slideshow::togglePause() {
+    const bool paused = mpv->getProperty("pause").toBool();
+    mpv->setProperty("pause", !paused);
+    return !paused;
+}
+
 void Slideshow::next() {
-    
+    mpv->command(QStringList() << "playlist-next");
 }
 
 void Slideshow::previous() {
-    
+    mpv->command(QStringList() << "playlist-prev");
 }
 
 void Slideshow::setImageDuration(float seconds) {
