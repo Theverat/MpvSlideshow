@@ -13,3 +13,14 @@ as base.
 * Open project in QtCreator and compile
 
 I successfully compiled on Linux and Windows.
+
+## Todo
+
+* Prevent dropping of frames when images are loaded (this skips the whole image)
+* Add audio fade in/out for videos
+* Fade to black on image/video end, then fade in from black for the next image/video
+* Hide video seek bar when no video is displayed
+* Hide controls and cursor when mouse cursor is not moved for a while
+* Add keyboard shortcuts
+* Add help dialog
+
