@@ -84,6 +84,9 @@ QVariant MpvWidget::getProperty(const QString &name) const {
     return mpv::qt::get_property_variant(mpv, name);
 }
 
+//------------------------------------------------------------------
+// protected
+
 void MpvWidget::initializeGL() {
     initializeOpenGLFunctions();
     
@@ -129,6 +132,9 @@ void MpvWidget::paintGL() {
     glColor4f(1.f, 1.f, 1.f, 1.f);
 }
 
+//------------------------------------------------------------------
+// private slots
+
 void MpvWidget::swapped() {
     mpv_opengl_cb_report_flip(mpv_gl, 0);
     // Immediately schedule the next paintGL() call
@@ -143,28 +149,6 @@ void MpvWidget::on_mpv_events() {
             break;
         }
         handle_mpv_event(event);
-    }
-}
-
-void MpvWidget::handle_mpv_event(mpv_event *event) {
-    switch (event->event_id) {
-    case MPV_EVENT_PROPERTY_CHANGE: {
-        mpv_event_property *prop = (mpv_event_property *)event->data;
-        if (strcmp(prop->name, "time-pos") == 0) {
-            if (prop->format == MPV_FORMAT_DOUBLE) {
-                double time = *(double *)prop->data;
-                emit positionChanged(time);
-            }
-        } else if (strcmp(prop->name, "duration") == 0) {
-            if (prop->format == MPV_FORMAT_DOUBLE) {
-                double time = *(double *)prop->data;
-                emit durationChanged(time);
-            }
-        }
-        break;
-    }
-    default: ;
-        // Ignore uninteresting or unknown events.
     }
 }
 
@@ -185,6 +169,31 @@ void MpvWidget::maybeUpdate() {
         doneCurrent();
     } else {
         update();
+    }
+}
+
+//------------------------------------------------------------------
+// private
+
+void MpvWidget::handle_mpv_event(mpv_event *event) {
+    switch (event->event_id) {
+    case MPV_EVENT_PROPERTY_CHANGE: {
+        mpv_event_property *prop = (mpv_event_property *)event->data;
+        if (strcmp(prop->name, "time-pos") == 0) {
+            if (prop->format == MPV_FORMAT_DOUBLE) {
+                double time = *(double *)prop->data;
+                emit positionChanged(time);
+            }
+        } else if (strcmp(prop->name, "duration") == 0) {
+            if (prop->format == MPV_FORMAT_DOUBLE) {
+                double time = *(double *)prop->data;
+                emit durationChanged(time);
+            }
+        }
+        break;
+    }
+    default: ;
+        // Ignore uninteresting or unknown events.
     }
 }
 

@@ -4,13 +4,22 @@
 
 // Q_ASSERT
 #include <QtGlobal>
+#include <QDebug>
 
 
 Slideshow::Slideshow(MpvWidget *mpvWidget, QObject* parent)
     : QObject(parent),
       mpv(mpvWidget)
-{
+{}
+
+//------------------------------------------------------------------
+// public slots
+
+void Slideshow::open(QString path) {
+    Q_ASSERT(path.size());
     
+    mpv->command(QStringList() << "loadfile" << path);
+    this->applyImageDuration();
 }
 
 void Slideshow::resume() {
@@ -35,8 +44,20 @@ void Slideshow::previous() {
     mpv->command(QStringList() << "playlist-prev");
 }
 
-void Slideshow::setImageDuration(float seconds) {
-    Q_ASSERT(seconds >= 0.f);
+void Slideshow::seek(int pos) {
+    mpv->command(QVariantList() << "seek" << pos << "absolute");
+}
+
+void Slideshow::setImageDuration(double seconds) {
+    Q_ASSERT(seconds >= 0.0);
+    
     this->imageDuration = seconds;
-    mpv->setProperty("image-display-duration", seconds);
+    this->applyImageDuration();
+}
+
+//------------------------------------------------------------------
+// private
+
+void Slideshow::applyImageDuration() {
+    mpv->setProperty("image-display-duration", imageDuration);
 }

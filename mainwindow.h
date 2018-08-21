@@ -21,8 +21,6 @@ public:
     virtual ~MainWindow();
     
 public slots:
-    void open(QString path);
-    void seek(int pos);
     void togglePause();
     
 private slots:

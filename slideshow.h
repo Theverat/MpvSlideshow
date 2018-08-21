@@ -13,16 +13,20 @@ public:
     Slideshow(MpvWidget *mpvWidget, QObject* parent = 0);
     
 public slots:
+    void open(QString path);
     void resume();
     void pause();
     bool togglePause();
     void next();
     void previous();
-    void setImageDuration(float seconds);
+    void seek(int pos);
+    void setImageDuration(double seconds);
     
 private:
     MpvWidget *mpv;
-    float imageDuration = 7.f;
+    double imageDuration = 7.0;
+    
+    void applyImageDuration();
 };
 
 #endif // SLIDESHOW_H
