@@ -3,17 +3,22 @@
 #include "ui_mainwindow.h"
 #include "mpvwidget.h"
 #include "slideshow.h"
+#include "sliderstyle.h"
 
 #include <QPushButton>
 #include <QSlider>
 #include <QLayout>
 #include <QFileDialog>
 
+#include <QDebug>
+
+
 MainWindow::MainWindow(QWidget *parent) 
     : QMainWindow(parent),
       ui(new Ui::MainWindow)
 {
     ui->setupUi(this);
+    ui->videoSeekBar->setStyle(new MyStyle(ui->videoSeekBar->style()));
     mpv = ui->mpvWidget;
     slideshow = new Slideshow(ui->mpvWidget, this);
     
@@ -21,10 +26,10 @@ MainWindow::MainWindow(QWidget *parent)
     connect(ui->prev, SIGNAL(released()), slideshow, SLOT(previous()));
     connect(ui->togglePause, SIGNAL(released()), this, SLOT(togglePause()));
     connect(ui->next, SIGNAL(released()), slideshow, SLOT(next()));
-    connect(ui->videoSeekBar, SIGNAL(sliderMoved(int)), slideshow, SLOT(seek(int)));
     connect(ui->imageDuration, SIGNAL(valueChanged(double)), slideshow, SLOT(setImageDuration(double)));
+    connect(ui->videoSeekBar, SIGNAL(valueChanged(int)), slideshow, SLOT(seek(int)));
     
-    connect(mpv, SIGNAL(positionChanged(int)), ui->videoSeekBar, SLOT(setValue(int)));
+    connect(mpv, SIGNAL(positionChanged(int)), this, SLOT(handleVideoPositionChange(int)));
     connect(mpv, SIGNAL(durationChanged(int)), this, SLOT(setSliderRange(int)));
 }
 
@@ -45,6 +50,14 @@ void MainWindow::togglePause() {
 
 void MainWindow::setSliderRange(int duration) {
     ui->videoSeekBar->setRange(0, duration);
+}
+
+void MainWindow::handleVideoPositionChange(int pos) {
+    // We have to block all signals of the videoSeekBar, otherwise there
+    // are feedback loops and the playback stutters every few seconds
+    ui->videoSeekBar->blockSignals(true);
+    ui->videoSeekBar->setValue(pos);
+    ui->videoSeekBar->blockSignals(false);
 }
 
 // Show a directory selection dialog and open the images in the chosen directory

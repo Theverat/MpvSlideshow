@@ -25,6 +25,7 @@ public slots:
     
 private slots:
     void setSliderRange(int duration);
+    void handleVideoPositionChange(int pos);
     void openDialog();
     
 private:
