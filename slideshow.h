@@ -2,6 +2,7 @@
 #define SLIDESHOW_H
 
 #include <QObject>
+#include <QTimer>
 
 class MpvWidget;
 
@@ -13,9 +14,9 @@ public:
     Slideshow(MpvWidget *mpvWidget, QObject* parent = 0);
     
 public slots:
-    void open(QString path);
-    void resume();
-    void pause();
+    void openDir(const QString &path);
+//    void resume();
+//    void pause();
     bool togglePause();
     void next();
     void previous();
@@ -25,8 +26,14 @@ public slots:
 private:
     MpvWidget *mpv;
     double imageDuration = 7.0;
+    QString currentDirPath;
+    QString currentFilePath;
+    QTimer nextTimer;
+    bool paused;
     
-    void applyImageDuration();
+    QStringList getMediaFilesInDir(const QString &currentDirPath) const;
+    void loadNeighbour(bool right);
+    void loadFile(const QString &filepath);
 };
 
 #endif // SLIDESHOW_H

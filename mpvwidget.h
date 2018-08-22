@@ -27,6 +27,7 @@ public slots:
 signals:
     void durationChanged(int value);
     void positionChanged(int value);
+    void endFile();
 protected:
     void drawFade();
     void initializeGL() Q_DECL_OVERRIDE;

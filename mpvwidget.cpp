@@ -32,7 +32,6 @@ static void *get_proc_address(void *ctx, const char *name) {
 MpvWidget::MpvWidget(QWidget *parent, Qt::WindowFlags f)
     : QOpenGLWidget(parent, f)
 {    
-    qDebug() << "constructor";
     mpv = mpv::qt::Handle::FromRawHandle(mpv_create());
     if (!mpv)
         throw std::runtime_error("could not create mpv context");
@@ -41,7 +40,7 @@ MpvWidget::MpvWidget(QWidget *parent, Qt::WindowFlags f)
     mpv_set_option_string(mpv, "video-timing-offset", "0");
     
     mpv_set_option_string(mpv, "terminal", "yes");
-    mpv_set_option_string(mpv, "msg-level", "all=v");
+    mpv_set_option_string(mpv, "msg-level", "all=warn");
     if (mpv_initialize(mpv) < 0)
         throw std::runtime_error("could not initialize mpv context");
 
@@ -191,7 +190,7 @@ void MpvWidget::paintGL() {
     makeCurrent();
     
     // Draw my custom overlay
-    drawFade();
+//    drawFade();
 }
 
 //------------------------------------------------------------------
@@ -256,10 +255,12 @@ void MpvWidget::handle_mpv_event(mpv_event *event) {
         }
         break;
     }
-    case MPV_EVENT_START_FILE: {    
-        
+    case MPV_EVENT_START_FILE: {
         const QString filepath = getProperty("path").toString();
         qDebug() << "loaded:" << filepath;
+        
+//        command(QVariantList() << "seek" << 0 << "absolute");
+//        qDebug() << "reset seek";
         
         ExifParser exif(filepath);
         // TODO implement the mirror/transpose cases
@@ -291,15 +292,20 @@ void MpvWidget::handle_mpv_event(mpv_event *event) {
                 setProperty("video-rotate", 270);
                 break;
             }
+        } else {
+            // No EXIF information, reset rotation
+            setProperty("video-rotate", 0);
         }
-        
-        qDebug() << exif.isValid() << exif.getOrientation();
-        
-//        const double imageDuration = this->getProperty("image-display-duration").toDouble();
-//        const double fadeStartTime = imageDuration - (this->fadeDuration / 2.0);
-        
-//        fadeTriggerTimer.setSingleShot(true);
-//        fadeTriggerTimer.start(fadeStartTime * 1000.0);
+        break;
+    }
+    case MPV_EVENT_END_FILE: {
+        // The fileFormat is not reliable, sometimes it's the format of the last image
+        QString fileFormat = getProperty("file-format").toString();
+        qDebug() << "end file format:" << fileFormat;
+//        if (getProperty("file-format").toString() != "mf") {
+//            qDebug() << "emit endFile";
+//            emit endFile();
+//        }
         break;
     }
     default: ;

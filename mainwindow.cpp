@@ -32,6 +32,7 @@ MainWindow::MainWindow(QWidget *parent)
     
     connect(mpv, SIGNAL(positionChanged(int)), this, SLOT(handleVideoPositionChange(int)));
     connect(mpv, SIGNAL(durationChanged(int)), this, SLOT(setSliderRange(int)));
+    connect(mpv, SIGNAL(endFile()), slideshow, SLOT(next()));
     
 //    ExifParser exif("/home/simon/Bilder/Fotos/Fotos_Berlin/000008_000007.JPG");
 //    qDebug() << "orientation:" << exif.isValid() << exif.getOrientation();
@@ -53,7 +54,9 @@ void MainWindow::togglePause() {
 // private slots
 
 void MainWindow::setSliderRange(int duration) {
+    ui->videoSeekBar->blockSignals(true);
     ui->videoSeekBar->setRange(0, duration);
+    ui->videoSeekBar->blockSignals(false);
 }
 
 void MainWindow::handleVideoPositionChange(int pos) {
@@ -67,7 +70,8 @@ void MainWindow::handleVideoPositionChange(int pos) {
 // Show a directory selection dialog and open the images in the chosen directory
 void MainWindow::openDialog() {
     // test
-    slideshow->open("/home/simon/Bilder/Fotos/Fotos_Berlin");
+    slideshow->openDir("/home/simon/Bilder/Fotos/Fotos_Berlin");
+//    slideshow->open("/home/simon/Bilder/Fotos/Fotos_Heimgarten/Auswahl/von Opa");
     return;
     
     QFileDialog dialog(this);
@@ -80,5 +84,5 @@ void MainWindow::openDialog() {
     }
     
     const QString path = dialog.selectedFiles().at(0);
-    slideshow->open(path);
+    slideshow->openDir(path);
 }
