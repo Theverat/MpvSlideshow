@@ -15,6 +15,9 @@ Slideshow::Slideshow(MpvWidget *mpvWidget, QObject* parent)
     nextTimer.setSingleShot(true);
     connect(&nextTimer, SIGNAL(timeout()), this, SLOT(next()));
     
+    fadeTimer.setSingleShot(true);
+    connect(&fadeTimer, SIGNAL(timeout()), mpv, SLOT(startFadeToBlack()));
+    
     imageFormats << "png" << "jpg" << "jpeg" << "tiff" << "tif"
                  << "ppm" << "bmp" << "xpm" << "gif";
     videoFormats << "mp4" << "mov";
@@ -124,6 +127,8 @@ bool Slideshow::isImage(const QString &filepath) {
 void Slideshow::maybeStartTimer() {
     if (isImage(this->currentFilePath) && !paused) {
         nextTimer.start(this->imageDuration * 1000);
+        const double timeUntilFade = this->imageDuration - mpv->getFadeDuration() / 2.0;
+        fadeTimer.start(timeUntilFade * 1000);
         qDebug() << "started timer";
     }
 }

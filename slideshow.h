@@ -30,6 +30,7 @@ private:
     QString currentDirPath;
     QString currentFilePath;
     QTimer nextTimer;
+    QTimer fadeTimer;
     bool paused = false;
     QStringList imageFormats;
     QStringList videoFormats;

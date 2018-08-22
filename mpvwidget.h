@@ -22,8 +22,9 @@ public:
     QVariant getProperty(const QString& name) const;
     //QSize sizeHint() const { return QSize(480, 270);}
     void setFadeDuration(double seconds);
+    double getFadeDuration() const;
 public slots:
-    void startFade();
+    void startFadeToBlack();
 signals:
     void durationChanged(int value);
     void positionChanged(int value);
@@ -37,15 +38,17 @@ private slots:
     void on_mpv_events();
     void maybeUpdate();
 private:
+    void checkShouldVideoFade();
     void handle_mpv_event(mpv_event *event);
     static void on_update(void *ctx);
+    void drawBlackQuad(float alpha);
 
     mpv::qt::Handle mpv;
     mpv_opengl_cb_context *mpv_gl;
     QTimer fadeTriggerTimer;
     QElapsedTimer fadeElapsedTimer;
-    double fadeDuration = 3.0;
-    bool fadeRunning = false;
+    double fadeDuration = 2.0;
+    bool fadeToBlackRunning = false;
 };
 
 

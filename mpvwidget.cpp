@@ -62,7 +62,7 @@ MpvWidget::MpvWidget(QWidget *parent, Qt::WindowFlags f)
     
     t.start();
     
-    connect(&fadeTriggerTimer, SIGNAL(timeout()), this, SLOT(startFade()));
+    connect(&fadeTriggerTimer, SIGNAL(timeout()), this, SLOT(startFadeToBlack()));
 }
 
 MpvWidget::~MpvWidget() {
@@ -93,11 +93,16 @@ void MpvWidget::setFadeDuration(double seconds) {
     this->fadeDuration = seconds;
 }
 
+double MpvWidget::getFadeDuration() const {
+    return this->fadeDuration;
+}
+
 //------------------------------------------------------------------
 // public slots
 
-void MpvWidget::startFade() {
+void MpvWidget::startFadeToBlack() {
     Q_ASSERT(this->fadeDuration >= 0.0);
+    qDebug() << "started fade to black";
     
     if (this->fadeDuration == 0.0) {
         // Nothing to do
@@ -105,7 +110,7 @@ void MpvWidget::startFade() {
     }
     
     this->fadeElapsedTimer.start();
-    this->fadeRunning = true;
+    this->fadeToBlackRunning = true;
 }
 
 //------------------------------------------------------------------
@@ -119,57 +124,20 @@ void MpvWidget::drawFade() {
         return;
     }
     
-    // hacky: start fade if video
-    const double remaining = getProperty("playtime-remaining").toDouble();
-    const QString fileFormat = getProperty("file-format").toString();
-//    qDebug() << "fileFormat:" << fileFormat << "remaining:" << remaining;
-    const QString imageFileFormat = "mf";
-    if (!fileFormat.isEmpty() 
-            && fileFormat != imageFileFormat 
-            && remaining < (this->fadeDuration / 2.0)
-            && !fadeRunning) {
-        qDebug() << "start video fade";
-        this->startFade();
-    }
-    
-    
     const double elapsed = this->fadeElapsedTimer.elapsed() / 1000.0;
-    const double elapsedNormalized = elapsed / fadeDuration;
+    const double elapsedNormalized = elapsed / (fadeDuration / 2.0);
     
-    if (elapsed > this->fadeDuration) {
-        fadeRunning = false;
+    if (elapsed > this->fadeDuration / 2.0) {
+        this->fadeToBlackRunning = false;
         return;
     }
     
-    glMatrixMode(GL_MODELVIEW);
-    glLoadIdentity();
-    glMatrixMode(GL_PROJECTION);
-    glLoadIdentity();
-    
-    glEnable(GL_BLEND);
-    glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
-    
-    const float alpha = elapsedNormalized < 0.5 
-                        ? elapsedNormalized * 2.0 
-                        : -elapsedNormalized * 2.0 + 2.0;
-    glColor4f(0.f, 0.f, 0.f, alpha);
-    
-    glBegin(GL_QUADS);
-    {
-        const float offset_x = -1.f;
-        const float offset_y = -1.f;
-        const float width = 2.f;
-        const float height = 2.f;
-        
-        glVertex2f(offset_x, offset_y);
-        glVertex2f(offset_x + width, offset_y);
-        glVertex2f(offset_x + width, offset_y + height);
-        glVertex2f(offset_x, offset_y + height);
+    float alpha = 0.f;
+    if (this->fadeToBlackRunning) {
+        alpha = elapsedNormalized;
     }
-    glEnd();
     
-    glDisable(GL_BLEND);
-    glColor4f(1.f, 1.f, 1.f, 1.f);
+    drawBlackQuad(alpha);
 }
 
 void MpvWidget::initializeGL() {
@@ -190,7 +158,9 @@ void MpvWidget::paintGL() {
     makeCurrent();
     
     // Draw my custom overlay
-//    drawFade();
+    checkShouldVideoFade();
+    if (this->fadeToBlackRunning)
+        drawFade();
 }
 
 //------------------------------------------------------------------
@@ -236,6 +206,15 @@ void MpvWidget::maybeUpdate() {
 //------------------------------------------------------------------
 // private
 
+void MpvWidget::checkShouldVideoFade() {
+    const double playTimeRemaining = getProperty("playtime-remaining").toDouble();
+    if (playTimeRemaining 
+            && playTimeRemaining < this->fadeDuration / 2.0
+            && !this->fadeToBlackRunning) {
+        startFadeToBlack();
+    }
+}
+
 void MpvWidget::handle_mpv_event(mpv_event *event) {
     switch (event->event_id) {
     case MPV_EVENT_PROPERTY_CHANGE: {
@@ -246,6 +225,7 @@ void MpvWidget::handle_mpv_event(mpv_event *event) {
             if (prop->format == MPV_FORMAT_DOUBLE) {
                 double time = *(double *)prop->data;
                 emit positionChanged(time);
+//                qDebug() << "pos changed:" << time;
             }
         } else if (propName == "duration") {
             if (prop->format == MPV_FORMAT_DOUBLE) {
@@ -317,4 +297,32 @@ void MpvWidget::handle_mpv_event(mpv_event *event) {
 
 void MpvWidget::on_update(void *ctx) {
     QMetaObject::invokeMethod((MpvWidget*)ctx, "maybeUpdate");
+}
+
+void MpvWidget::drawBlackQuad(float alpha) {
+    //    glMatrixMode(GL_MODELVIEW);
+    //    glLoadIdentity();
+    //    glMatrixMode(GL_PROJECTION);
+    //    glLoadIdentity();
+        
+        glEnable(GL_BLEND);
+        glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
+        glColor4f(0.f, 0.f, 0.f, alpha);
+        
+        glBegin(GL_QUADS);
+        {
+            const float offset_x = -1.f;
+            const float offset_y = -1.f;
+            const float width = 2.f;
+            const float height = 2.f;
+            
+            glVertex2f(offset_x, offset_y);
+            glVertex2f(offset_x + width, offset_y);
+            glVertex2f(offset_x + width, offset_y + height);
+            glVertex2f(offset_x, offset_y + height);
+        }
+        glEnd();
+        
+        glDisable(GL_BLEND);
+        glColor4f(1.f, 1.f, 1.f, 1.f);
 }
