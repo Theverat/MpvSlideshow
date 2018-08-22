@@ -22,6 +22,7 @@ public slots:
     void previous();
     void seek(int pos);
     void setImageDuration(double seconds);
+    void handleFileLoaded(const QString &filepath);
     
 private:
     MpvWidget *mpv;
@@ -30,10 +31,14 @@ private:
     QString currentFilePath;
     QTimer nextTimer;
     bool paused = false;
+    QStringList imageFormats;
+    QStringList videoFormats;
     
     QStringList getMediaFilesInDir(const QString &currentDirPath) const;
     void loadNeighbour(bool right);
     void loadFile(const QString &filepath);
+    bool isImage(const QString &filepath);
+    void maybeStartTimer();
 };
 
 #endif // SLIDESHOW_H

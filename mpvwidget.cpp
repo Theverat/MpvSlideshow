@@ -296,12 +296,14 @@ void MpvWidget::handle_mpv_event(mpv_event *event) {
             // No EXIF information, reset rotation
             setProperty("video-rotate", 0);
         }
+        
+        emit fileLoaded(filepath);
         break;
     }
     case MPV_EVENT_END_FILE: {
-        // The fileFormat is not reliable, sometimes it's the format of the last image
+        // The fileFormat is not reliable, sometimes it's the format of the next image
         QString fileFormat = getProperty("file-format").toString();
-        qDebug() << "end file format:" << fileFormat;
+//        qDebug() << "end file format:" << fileFormat;
 //        if (getProperty("file-format").toString() != "mf") {
 //            qDebug() << "emit endFile";
 //            emit endFile();

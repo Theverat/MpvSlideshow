@@ -14,6 +14,10 @@ Slideshow::Slideshow(MpvWidget *mpvWidget, QObject* parent)
 {
     nextTimer.setSingleShot(true);
     connect(&nextTimer, SIGNAL(timeout()), this, SLOT(next()));
+    
+    imageFormats << "png" << "jpg" << "jpeg" << "tiff" << "tif"
+                 << "ppm" << "bmp" << "xpm" << "gif";
+    videoFormats << "mp4" << "mov";
 }
 
 //------------------------------------------------------------------
@@ -36,7 +40,7 @@ bool Slideshow::togglePause() {
     if (paused) {
         nextTimer.stop();
     } else {
-        nextTimer.start(this->imageDuration * 1000);
+        maybeStartTimer();
     }
     return paused;
 }
@@ -59,15 +63,20 @@ void Slideshow::setImageDuration(double seconds) {
     this->imageDuration = seconds;
 }
 
+void Slideshow::handleFileLoaded(const QString &filepath) {
+//    qDebug() << "handleFileLoaded" << filepath;
+    
+    // activate time if not video etc.
+}
+
 //------------------------------------------------------------------
 // private
 
 QStringList Slideshow::getMediaFilesInDir(const QString &dirPath) const {
-    QStringList nameFilter;
-    nameFilter << "*.png" << "*.jpg" << "*.jpeg" << "*.tiff" << "*.tif"
-               << "*.ppm" << "*.bmp" << "*.xpm" << "*.gif"
-               // Video formats (TODO: add more)
-               << "*.mp4" << "*.mov";
+    QStringList nameFilter = imageFormats + videoFormats;
+    for (QString &entry : nameFilter) {
+        entry.prepend("*.");
+    }
     
     QDir directory(dirPath);
     QStringList entryList = directory.entryList(nameFilter, QDir::Files);
@@ -87,7 +96,6 @@ void Slideshow::loadNeighbour(bool right) {
     const int currentIndex = files.indexOf(this->currentFilePath);
     const int offset = right ? 1 : -1;
     const int neighbourIndex = currentIndex + offset;
-    qDebug() << "size" << files.size() << "current" << currentIndex << "neighbourIndex" << neighbourIndex;
     
     if (neighbourIndex < 0 || neighbourIndex >= files.size())
         // TODO show black image or something?
@@ -103,7 +111,19 @@ void Slideshow::loadFile(const QString &filepath) {
     mpv->setProperty("image-display-duration", "inf");
     mpv->command(QStringList() << "loadfile" << filepath);
     
-    if (!paused) {
-        nextTimer.start(this->imageDuration * 1000.0);
+    nextTimer.stop();
+    maybeStartTimer();
+}
+
+bool Slideshow::isImage(const QString &filepath) {
+    QFileInfo fileInfo(filepath);
+    const QString &extension = fileInfo.completeSuffix();
+    return imageFormats.contains(extension.toLower());
+}
+
+void Slideshow::maybeStartTimer() {
+    if (isImage(this->currentFilePath) && !paused) {
+        nextTimer.start(this->imageDuration * 1000);
+        qDebug() << "started timer";
     }
 }
