@@ -1,11 +1,13 @@
 
 #include "mpvwidget.h"
+#include "exifparser.h"
 
 #include <stdexcept>
 
 #include <QtGui/QOpenGLContext>
 #include <QtCore/QMetaObject>
 // debug
+#include <QtGlobal> // Q_ASSERT
 #include <QDebug>
 #include <QElapsedTimer>
 #include <cmath> // sin
@@ -59,7 +61,9 @@ MpvWidget::MpvWidget(QWidget *parent, Qt::WindowFlags f)
     mpv_observe_property(mpv, 0, "time-pos", MPV_FORMAT_DOUBLE);
     mpv_set_wakeup_callback(mpv, wakeup, this);
     
-    t.start();    
+    t.start();
+    
+    connect(&fadeTriggerTimer, SIGNAL(timeout()), this, SLOT(startFade()));
 }
 
 MpvWidget::~MpvWidget() {
@@ -84,8 +88,90 @@ QVariant MpvWidget::getProperty(const QString &name) const {
     return mpv::qt::get_property_variant(mpv, name);
 }
 
+void MpvWidget::setFadeDuration(double seconds) {
+    Q_ASSERT(seconds >= 0.0);
+    
+    this->fadeDuration = seconds;
+}
+
+//------------------------------------------------------------------
+// public slots
+
+void MpvWidget::startFade() {
+    Q_ASSERT(this->fadeDuration >= 0.0);
+    
+    if (this->fadeDuration == 0.0) {
+        // Nothing to do
+        return;
+    }
+    
+    this->fadeElapsedTimer.start();
+    this->fadeRunning = true;
+}
+
 //------------------------------------------------------------------
 // protected
+
+void MpvWidget::drawFade() {
+    Q_ASSERT(this->fadeDuration >= 0.0);
+    
+    if (this->fadeDuration == 0.0) {
+        // Nothing to do
+        return;
+    }
+    
+    // hacky: start fade if video
+    const double remaining = getProperty("playtime-remaining").toDouble();
+    const QString fileFormat = getProperty("file-format").toString();
+//    qDebug() << "fileFormat:" << fileFormat << "remaining:" << remaining;
+    const QString imageFileFormat = "mf";
+    if (!fileFormat.isEmpty() 
+            && fileFormat != imageFileFormat 
+            && remaining < (this->fadeDuration / 2.0)
+            && !fadeRunning) {
+        qDebug() << "start video fade";
+        this->startFade();
+    }
+    
+    
+    const double elapsed = this->fadeElapsedTimer.elapsed() / 1000.0;
+    const double elapsedNormalized = elapsed / fadeDuration;
+    
+    if (elapsed > this->fadeDuration) {
+        fadeRunning = false;
+        return;
+    }
+    
+    glMatrixMode(GL_MODELVIEW);
+    glLoadIdentity();
+    glMatrixMode(GL_PROJECTION);
+    glLoadIdentity();
+    
+    glEnable(GL_BLEND);
+    glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
+    
+    const float alpha = elapsedNormalized < 0.5 
+                        ? elapsedNormalized * 2.0 
+                        : -elapsedNormalized * 2.0 + 2.0;
+    glColor4f(0.f, 0.f, 0.f, alpha);
+    
+    glBegin(GL_QUADS);
+    {
+        const float offset_x = -1.f;
+        const float offset_y = -1.f;
+        const float width = 2.f;
+        const float height = 2.f;
+        
+        glVertex2f(offset_x, offset_y);
+        glVertex2f(offset_x + width, offset_y);
+        glVertex2f(offset_x + width, offset_y + height);
+        glVertex2f(offset_x, offset_y + height);
+    }
+    glEnd();
+    
+    glDisable(GL_BLEND);
+    glColor4f(1.f, 1.f, 1.f, 1.f);
+}
 
 void MpvWidget::initializeGL() {
     initializeOpenGLFunctions();
@@ -97,7 +183,7 @@ void MpvWidget::initializeGL() {
 
 void MpvWidget::paintGL() {
     qint64 elapsed = t.elapsed();
-//    qDebug() << "paint" << elapsed / 1000.f << "frametime:" << elapsed- last;
+//    qDebug() << "paint" << elapsed / 1000.f << "frametime:" << elapsed - last;
     last = elapsed;
     
     mpv_opengl_cb_draw(mpv_gl, defaultFramebufferObject(), width(), -height());
@@ -105,31 +191,7 @@ void MpvWidget::paintGL() {
     makeCurrent();
     
     // Draw my custom overlay
-    
-    glMatrixMode(GL_MODELVIEW);
-    glLoadIdentity();
-    glMatrixMode(GL_PROJECTION);
-    glLoadIdentity();
-    
-    glEnable(GL_BLEND);
-    glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
-    const float alpha = sin(elapsed / 1000.f) * 0.5f + 0.5f;
-    glColor4f(1.f, 0.f, 0.f, alpha);
-    glBegin(GL_QUADS);
-    {
-        const float offset_x = 0.f;
-        const float offset_y = 0.f;
-        const float width = 0.8f;
-        const float height = 0.8f;
-        
-        glVertex2f(offset_x, offset_y);
-        glVertex2f(offset_x + width, offset_y);
-        glVertex2f(offset_x + width, offset_y + height);
-        glVertex2f(offset_x, offset_y + height);
-    }
-    glEnd();
-    glDisable(GL_BLEND);
-    glColor4f(1.f, 1.f, 1.f, 1.f);
+    drawFade();
 }
 
 //------------------------------------------------------------------
@@ -179,17 +241,65 @@ void MpvWidget::handle_mpv_event(mpv_event *event) {
     switch (event->event_id) {
     case MPV_EVENT_PROPERTY_CHANGE: {
         mpv_event_property *prop = (mpv_event_property *)event->data;
-        if (strcmp(prop->name, "time-pos") == 0) {
+        const QString propName(prop->name);
+        
+        if (propName == "time-pos") {
             if (prop->format == MPV_FORMAT_DOUBLE) {
                 double time = *(double *)prop->data;
                 emit positionChanged(time);
             }
-        } else if (strcmp(prop->name, "duration") == 0) {
+        } else if (propName == "duration") {
             if (prop->format == MPV_FORMAT_DOUBLE) {
                 double time = *(double *)prop->data;
                 emit durationChanged(time);
             }
         }
+        break;
+    }
+    case MPV_EVENT_START_FILE: {    
+        
+        const QString filepath = getProperty("path").toString();
+        qDebug() << "loaded:" << filepath;
+        
+        ExifParser exif(filepath);
+        // TODO implement the mirror/transpose cases
+        if(exif.isValid()) {
+            switch(exif.getOrientation()) {
+            case 1:
+                setProperty("video-rotate", 0);
+                break;
+            case 2:
+//                image = image.mirrored(true, false);
+                break;
+            case 3:
+                setProperty("video-rotate", 180);
+                break;
+            case 4:
+//                image = image.mirrored(false, true);
+                break;
+            case 5:
+//                transform = transform.transposed();
+                break;
+            case 6:
+                setProperty("video-rotate", 90);
+                break;
+            case 7:
+//                transform.rotate(-90);
+//                image = image.mirrored(false, true);
+                break;
+            case 8:
+                setProperty("video-rotate", 270);
+                break;
+            }
+        }
+        
+        qDebug() << exif.isValid() << exif.getOrientation();
+        
+//        const double imageDuration = this->getProperty("image-display-duration").toDouble();
+//        const double fadeStartTime = imageDuration - (this->fadeDuration / 2.0);
+        
+//        fadeTriggerTimer.setSingleShot(true);
+//        fadeTriggerTimer.start(fadeStartTime * 1000.0);
         break;
     }
     default: ;

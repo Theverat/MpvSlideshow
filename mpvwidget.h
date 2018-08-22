@@ -3,6 +3,8 @@
 
 #include <QtWidgets/QOpenGLWidget>
 #include <QOpenGLFunctions>
+#include <QTimer>
+#include <QElapsedTimer>
 
 #include <mpv/client.h>
 #include <mpv/opengl_cb.h>
@@ -18,11 +20,15 @@ public:
     void command(const QVariant& params);
     void setProperty(const QString& name, const QVariant& value);
     QVariant getProperty(const QString& name) const;
-    QSize sizeHint() const { return QSize(480, 270);}
+    //QSize sizeHint() const { return QSize(480, 270);}
+    void setFadeDuration(double seconds);
+public slots:
+    void startFade();
 signals:
     void durationChanged(int value);
     void positionChanged(int value);
 protected:
+    void drawFade();
     void initializeGL() Q_DECL_OVERRIDE;
     void paintGL() Q_DECL_OVERRIDE;
 private slots:
@@ -35,6 +41,10 @@ private:
 
     mpv::qt::Handle mpv;
     mpv_opengl_cb_context *mpv_gl;
+    QTimer fadeTriggerTimer;
+    QElapsedTimer fadeElapsedTimer;
+    double fadeDuration = 3.0;
+    bool fadeRunning = false;
 };
 
 
