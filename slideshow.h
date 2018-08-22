@@ -29,7 +29,7 @@ private:
     QString currentDirPath;
     QString currentFilePath;
     QTimer nextTimer;
-    bool paused;
+    bool paused = false;
     
     QStringList getMediaFilesInDir(const QString &currentDirPath) const;
     void loadNeighbour(bool right);

@@ -32,7 +32,7 @@ void Slideshow::openDir(const QString &path) {
 }
 
 bool Slideshow::togglePause() {
-    paused != paused;
+    paused = !paused;
     if (paused) {
         nextTimer.stop();
     } else {

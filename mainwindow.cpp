@@ -4,7 +4,6 @@
 #include "mpvwidget.h"
 #include "slideshow.h"
 #include "sliderstyle.h"
-#include "exifparser.h"
 
 #include <QPushButton>
 #include <QSlider>
@@ -33,9 +32,6 @@ MainWindow::MainWindow(QWidget *parent)
     connect(mpv, SIGNAL(positionChanged(int)), this, SLOT(handleVideoPositionChange(int)));
     connect(mpv, SIGNAL(durationChanged(int)), this, SLOT(setSliderRange(int)));
     connect(mpv, SIGNAL(endFile()), slideshow, SLOT(next()));
-    
-//    ExifParser exif("/home/simon/Bilder/Fotos/Fotos_Berlin/000008_000007.JPG");
-//    qDebug() << "orientation:" << exif.isValid() << exif.getOrientation();
 }
 
 MainWindow::~MainWindow() {
