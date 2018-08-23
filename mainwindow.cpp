@@ -9,6 +9,7 @@
 #include <QSlider>
 #include <QLayout>
 #include <QFileDialog>
+#include <QShortcut>
 
 #include <QDebug>
 
@@ -22,6 +23,16 @@ MainWindow::MainWindow(QWidget *parent)
     mpv = ui->mpvWidget;
     slideshow = new Slideshow(ui->mpvWidget, this);
     
+    shortcutOpen = new QShortcut(QKeySequence(tr("Ctrl+O", "Open")), this);
+    shortcutPrev = new QShortcut(QKeySequence(tr("Left", "Previous")), this);
+    shortcutNext = new QShortcut(QKeySequence(tr("Right", "Next")), this);
+    shortcutTogglePause = new QShortcut(QKeySequence(Qt::Key_Space), this);
+    
+    connect(shortcutOpen, SIGNAL(activated()), this, SLOT(openDialog()));
+    connect(shortcutPrev, SIGNAL(activated()), slideshow, SLOT(previous()));
+    connect(shortcutNext, SIGNAL(activated()), slideshow, SLOT(next()));
+    connect(shortcutTogglePause, SIGNAL(activated()), this, SLOT(togglePause()));
+    
     connect(ui->open, SIGNAL(released()), this, SLOT(openDialog()));
     connect(ui->prev, SIGNAL(released()), slideshow, SLOT(previous()));
     connect(ui->togglePause, SIGNAL(released()), this, SLOT(togglePause()));
@@ -32,6 +43,8 @@ MainWindow::MainWindow(QWidget *parent)
     connect(mpv, SIGNAL(positionChanged(int)), this, SLOT(handleVideoPositionChange(int)));
     connect(mpv, SIGNAL(durationChanged(int)), this, SLOT(setSliderRange(int)));
     connect(mpv, SIGNAL(fileLoaded(QString)), slideshow, SLOT(handleFileLoaded(QString)));
+    
+    
 }
 
 MainWindow::~MainWindow() {

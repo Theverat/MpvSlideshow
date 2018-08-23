@@ -5,8 +5,7 @@
 
 class MpvWidget;
 class Slideshow;
-class QSlider;
-class QPushButton;
+class QShortcut;
 
 namespace Ui {
 class MainWindow;
@@ -31,10 +30,12 @@ private slots:
 private:
     Ui::MainWindow *ui;
     MpvWidget *mpv;
-    QSlider *slider;
-    QPushButton *openBtn;
-    QPushButton *playBtn;
     Slideshow *slideshow;
+    
+    QShortcut *shortcutOpen;
+    QShortcut *shortcutPrev;
+    QShortcut *shortcutNext;
+    QShortcut *shortcutTogglePause;
 };
 
 #endif // MainWindow_H
