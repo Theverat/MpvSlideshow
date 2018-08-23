@@ -102,15 +102,28 @@ double MpvWidget::getFadeDuration() const {
 
 void MpvWidget::startFadeToBlack() {
     Q_ASSERT(this->fadeDuration >= 0.0);
-    qDebug() << "started fade to black";
     
     if (this->fadeDuration == 0.0) {
         // Nothing to do
         return;
     }
+    qDebug() << "started fade to black";
     
     this->fadeElapsedTimer.start();
-    this->fadeToBlackRunning = true;
+    this->fadeType = Fade::TO_BLACK;
+}
+
+void MpvWidget::startFadeFromBlack() {
+    Q_ASSERT(this->fadeDuration >= 0.0);
+    
+    if (this->fadeDuration == 0.0) {
+        // Nothing to do
+        return;
+    }
+    qDebug() << "started fade from black";
+    
+    this->fadeElapsedTimer.start();
+    this->fadeType = Fade::FROM_BLACK;
 }
 
 //------------------------------------------------------------------
@@ -119,7 +132,7 @@ void MpvWidget::startFadeToBlack() {
 void MpvWidget::drawFade() {
     Q_ASSERT(this->fadeDuration >= 0.0);
     
-    if (this->fadeDuration == 0.0) {
+    if (this->fadeDuration == 0.0 || this->fadeType == Fade::NONE) {
         // Nothing to do
         return;
     }
@@ -128,13 +141,25 @@ void MpvWidget::drawFade() {
     const double elapsedNormalized = elapsed / (fadeDuration / 2.0);
     
     if (elapsed > this->fadeDuration / 2.0) {
-        this->fadeToBlackRunning = false;
-        return;
+        // Time's up
+        if (this->fadeType == Fade::TO_BLACK) {
+            this->fadeType = Fade::BLACK;
+        } else if (this->fadeType == Fade::FROM_BLACK) {
+            this->fadeType = Fade::NONE;
+            return;
+        }
     }
     
     float alpha = 0.f;
-    if (this->fadeToBlackRunning) {
+    if (this->fadeType == Fade::TO_BLACK) {
+        qDebug() << "to black" << elapsedNormalized;
         alpha = elapsedNormalized;
+    } else if (this->fadeType == Fade::BLACK) {
+        qDebug() << "BLACK" << elapsedNormalized;
+        alpha = 1.f;
+    } else if (this->fadeType == Fade::FROM_BLACK) {
+        qDebug() << "from black" << elapsedNormalized;
+        alpha = 1.f - elapsedNormalized;
     }
     
     drawBlackQuad(alpha);
@@ -159,8 +184,7 @@ void MpvWidget::paintGL() {
     
     // Draw my custom overlay
     checkShouldVideoFade();
-    if (this->fadeToBlackRunning)
-        drawFade();
+    drawFade();
 }
 
 //------------------------------------------------------------------
@@ -210,7 +234,7 @@ void MpvWidget::checkShouldVideoFade() {
     const double playTimeRemaining = getProperty("playtime-remaining").toDouble();
     if (playTimeRemaining 
             && playTimeRemaining < this->fadeDuration / 2.0
-            && !this->fadeToBlackRunning) {
+            && this->fadeType == Fade::NONE) {
         startFadeToBlack();
     }
 }
@@ -237,7 +261,7 @@ void MpvWidget::handle_mpv_event(mpv_event *event) {
     }
     case MPV_EVENT_START_FILE: {
         const QString filepath = getProperty("path").toString();
-        qDebug() << "loaded:" << filepath;
+        qDebug() << "start file:" << filepath;
         
 //        command(QVariantList() << "seek" << 0 << "absolute");
 //        qDebug() << "reset seek";
@@ -276,18 +300,13 @@ void MpvWidget::handle_mpv_event(mpv_event *event) {
             // No EXIF information, reset rotation
             setProperty("video-rotate", 0);
         }
-        
-        emit fileLoaded(filepath);
         break;
     }
-    case MPV_EVENT_END_FILE: {
-        // The fileFormat is not reliable, sometimes it's the format of the next image
-        QString fileFormat = getProperty("file-format").toString();
-//        qDebug() << "end file format:" << fileFormat;
-//        if (getProperty("file-format").toString() != "mf") {
-//            qDebug() << "emit endFile";
-//            emit endFile();
-//        }
+    case MPV_EVENT_FILE_LOADED: {
+        const QString filepath = getProperty("path").toString();
+        qDebug() << "loaded";
+        emit fileLoaded(filepath);
+        startFadeFromBlack();
         break;
     }
     default: ;

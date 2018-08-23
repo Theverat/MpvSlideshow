@@ -10,6 +10,12 @@
 #include <mpv/opengl_cb.h>
 #include <mpv/qthelper.hpp>
 
+enum class Fade {
+    NONE,
+    TO_BLACK,
+    FROM_BLACK,
+    BLACK,
+};
 
 class MpvWidget Q_DECL_FINAL: public QOpenGLWidget, protected QOpenGLFunctions
 {
@@ -25,6 +31,7 @@ public:
     double getFadeDuration() const;
 public slots:
     void startFadeToBlack();
+    void startFadeFromBlack();
 signals:
     void durationChanged(int value);
     void positionChanged(int value);
@@ -48,7 +55,7 @@ private:
     QTimer fadeTriggerTimer;
     QElapsedTimer fadeElapsedTimer;
     double fadeDuration = 2.0;
-    bool fadeToBlackRunning = false;
+    Fade fadeType = Fade::NONE;
 };
 
 
