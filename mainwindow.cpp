@@ -43,8 +43,6 @@ MainWindow::MainWindow(QWidget *parent)
     connect(mpv, SIGNAL(positionChanged(int)), this, SLOT(handleVideoPositionChange(int)));
     connect(mpv, SIGNAL(durationChanged(int)), this, SLOT(setSliderRange(int)));
     connect(mpv, SIGNAL(fileLoaded(QString)), slideshow, SLOT(handleFileLoaded(QString)));
-    
-    
 }
 
 MainWindow::~MainWindow() {

@@ -22,7 +22,7 @@ I successfully compiled on Linux and Windows.
 * [ ] Instead of fade to black: fade from current to next image
 * [ ] Hide video seek bar when no video is displayed
 * [ ] Hide controls and cursor when mouse cursor is not moved for a while
-* [ ] Add keyboard shortcuts
+* [x] Add keyboard shortcuts
 * [ ] Add help dialog
 * [x] Rotate images according to their EXIF data
 * [x] Do not throw away the playlist when it ends
