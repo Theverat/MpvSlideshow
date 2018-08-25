@@ -32,27 +32,44 @@ void Compositor::initializeGL() {
     
     connect(this, SIGNAL(frameSwapped()), this, SLOT(swapped()));
     
-    QString filepath = "/home/simon/Bilder/four_leaf/1497596541312.gif";
+    // test TODO remove
+    QString filepath = "/home/simon/Videos/Kazam_screencast_00001.mp4";
     mpvInstances[0]->command(QStringList() << "loadfile" << filepath);
     mpvInstances[0]->setProperty("image-display-duration", "inf");
-    filepath = "/home/simon/Bilder/four_leaf/1508300969612.jpg";
+    
+    filepath = "/home/simon/Videos/mix_example.mp4";
     mpvInstances[1]->command(QStringList() << "loadfile" << filepath);
     mpvInstances[1]->setProperty("image-display-duration", "inf");
+    
+    filepath = "/home/simon/Videos/chains_problem.mp4";
+    mpvInstances[2]->command(QStringList() << "loadfile" << filepath);
+    mpvInstances[2]->setProperty("image-display-duration", "inf");
 }
 
 void Compositor::paintGL() {
-    mpvInstances[0]->paintGL(defaultFramebufferObject(), width(), height());
+    for (MpvInterface *mpv : mpvInstances) {
+        mpv->paintGL(width(), height());
+    }
+//    mpvInstances[0]->paintGL(width(), height());
     makeCurrent();
     
-//    glEnable(GL_BLEND);
-//    glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
-//    glColor4f(1.f, 1.f, 1.f, 0.5f);
+//    glEnable(GL_COLOR_MATERIAL);
+//    glEnable(GL_TEXTURE_2D);
+//    glBindTexture(GL_TEXTURE_2D, mpvInstances[0]->getFbo()->texture());
+//    drawFullscreenQuad(0.5f);
+//    glDisable(GL_TEXTURE_2D);
+//    glDisable(GL_COLOR_MATERIAL);
     
-//    mpvInstances[1]->paintGL(defaultFramebufferObject(), width(), height());
-//    makeCurrent();
-    
-//    glDisable(GL_BLEND);
-//    glColor4f(1.f, 1.f, 1.f, 1.f);
+    // TODO use a fragment shader for mixing
+    float alpha = 1.f;
+    for (MpvInterface *mpv : mpvInstances) {
+        glEnable(GL_TEXTURE_2D);
+        glBindTexture(GL_TEXTURE_2D, mpv->getFbo()->texture());
+        drawFullscreenQuad(alpha);
+        glDisable(GL_TEXTURE_2D);
+        
+        alpha -= 0.33f;
+    }
 }
 
 //------------------------------------------------------------------
@@ -89,3 +106,34 @@ void Compositor::maybeUpdate() {
 //------------------------------------------------------------------
 // private
 
+void Compositor::drawFullscreenQuad(float alpha) {
+    glMatrixMode(GL_PROJECTION);
+    glLoadIdentity();
+    glMatrixMode(GL_MODELVIEW);
+    glLoadIdentity();
+    
+    glEnable(GL_BLEND);
+    glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
+    glColor4f(1.f, 1.f, 1.f, alpha);
+    
+    glBegin(GL_QUADS);
+    {
+        const float offset_x = -1.f;
+        const float offset_y = -1.f;
+        const float width = 2.f;
+        const float height = 2.f;
+        
+        glTexCoord2f(0, 0);
+        glVertex2f(offset_x, offset_y);
+        glTexCoord2f(1, 0);
+        glVertex2f(offset_x + width, offset_y);
+        glTexCoord2f(1, 1);
+        glVertex2f(offset_x + width, offset_y + height);
+        glTexCoord2f(0, 1);
+        glVertex2f(offset_x, offset_y + height);
+    }
+    glEnd();
+    
+    glDisable(GL_BLEND);
+    glColor4f(1.f, 1.f, 1.f, 1.f);
+}

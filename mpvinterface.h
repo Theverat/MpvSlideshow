@@ -2,10 +2,12 @@
 #define MPVINTERFACE_H
 
 #include <QObject>
+#include <QOpenGLFramebufferObject>
 
 #include <mpv/client.h>
 #include <mpv/opengl_cb.h>
 #include <mpv/qthelper.hpp>
+
 
 class MpvInterface : public QObject
 {
@@ -14,8 +16,9 @@ public:
     explicit MpvInterface(QObject *parent = 0);
     virtual ~MpvInterface();
     void initializeGL();
-    void paintGL(int fbo, int width, int height);
+    void paintGL(int width, int height);
     void swapped();
+    QOpenGLFramebufferObject *getFbo();
     
     void command(const QVariant& params);
     void setProperty(const QString& name, const QVariant& value);
@@ -36,6 +39,7 @@ private:
     
     mpv::qt::Handle mpv;
     mpv_opengl_cb_context *mpv_gl;
+    QOpenGLFramebufferObject *fbo;
 };
 
 #endif // MPVINTERFACE_H

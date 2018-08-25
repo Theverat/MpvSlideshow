@@ -4,6 +4,7 @@
 #include <stdexcept>
 
 #include <QtGui/QOpenGLContext>
+#include <QDebug>
 
 
 static void wakeup(void *ctx) {
@@ -19,7 +20,9 @@ static void *get_proc_address(void *ctx, const char *name) {
 }
 
 
-MpvInterface::MpvInterface(QObject *parent) : QObject(parent)
+MpvInterface::MpvInterface(QObject *parent) 
+    : QObject(parent), 
+      fbo(NULL)
 {
     mpv = mpv::qt::Handle::FromRawHandle(mpv_create());
     if (!mpv)
@@ -62,14 +65,26 @@ void MpvInterface::initializeGL() {
     int r = mpv_opengl_cb_init_gl(mpv_gl, NULL, get_proc_address, NULL);
     if (r < 0)
         throw std::runtime_error("could not initialize OpenGL");
+    
+    fbo = new QOpenGLFramebufferObject(4, 4);
 }
 
-void MpvInterface::paintGL(int fbo, int width, int height) {
-    mpv_opengl_cb_draw(mpv_gl, fbo, width, -height);
+void MpvInterface::paintGL(int width, int height) {
+    if (fbo->width() != width || fbo->height() != height) {
+        qDebug() << "resizing fbo";
+        delete fbo;
+        fbo = new QOpenGLFramebufferObject(width, height);
+    }
+    
+    mpv_opengl_cb_draw(mpv_gl, fbo->handle(), width, -height);
 }
 
 void MpvInterface::swapped() {
     mpv_opengl_cb_report_flip(mpv_gl, 0);
+}
+
+QOpenGLFramebufferObject *MpvInterface::getFbo() {
+    return fbo;
 }
 
 void MpvInterface::command(const QVariant& params) {

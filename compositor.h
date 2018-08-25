@@ -4,6 +4,8 @@
 #include <QtWidgets/QOpenGLWidget>
 #include <QOpenGLFunctions>
 
+#include <vector>
+
 
 class MpvInterface;
 
@@ -24,6 +26,9 @@ protected:
 private slots:
     void swapped();
     void maybeUpdate();
+    
+private:
+    void drawFullscreenQuad(float alpha);
 };
 
 #endif // COMPOSITOR_H
