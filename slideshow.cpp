@@ -1,6 +1,6 @@
 
 #include "slideshow.h"
-#include "mpvwidget.h"
+#include "compositor.h"
 
 #include <QDir>
 #include <QFileInfo>
@@ -8,15 +8,15 @@
 #include <QDebug>
 
 
-Slideshow::Slideshow(MpvWidget *mpvWidget, QObject* parent)
+Slideshow::Slideshow(Compositor *compositor, QObject* parent)
     : QObject(parent),
-      mpv(mpvWidget)
+      compositor(compositor)
 {
     nextTimer.setSingleShot(true);
     connect(&nextTimer, SIGNAL(timeout()), this, SLOT(next()));
     
     fadeTimer.setSingleShot(true);
-    connect(&fadeTimer, SIGNAL(timeout()), mpv, SLOT(startFadeToBlack()));
+//    connect(&fadeTimer, SIGNAL(timeout()), mpv, SLOT(startFadeToBlack()));
     
     imageFormats << "png" << "jpg" << "jpeg" << "tiff" << "tif"
                  << "ppm" << "bmp" << "xpm" << "gif";
@@ -57,7 +57,7 @@ void Slideshow::previous() {
 }
 
 void Slideshow::seek(int pos) {
-    mpv->command(QVariantList() << "seek" << pos << "absolute");
+//    mpv->command(QVariantList() << "seek" << pos << "absolute");
 }
 
 void Slideshow::setImageDuration(double seconds) {
@@ -111,8 +111,8 @@ void Slideshow::loadNeighbour(bool right) {
 void Slideshow::loadFile(const QString &filepath) {
     this->currentFilePath = filepath;
     
-    mpv->setProperty("image-display-duration", "inf");
-    mpv->command(QStringList() << "loadfile" << filepath);
+//    mpv->setProperty("image-display-duration", "inf");
+//    mpv->command(QStringList() << "loadfile" << filepath);
     
     nextTimer.stop();
     maybeStartTimer();
@@ -127,8 +127,8 @@ bool Slideshow::isImage(const QString &filepath) {
 void Slideshow::maybeStartTimer() {
     if (isImage(this->currentFilePath) && !paused) {
         nextTimer.start(this->imageDuration * 1000);
-        const double timeUntilFade = this->imageDuration - mpv->getFadeDuration() / 2.0;
-        fadeTimer.start(timeUntilFade * 1000);
+//        const double timeUntilFade = this->imageDuration - mpv->getFadeDuration() / 2.0;
+//        fadeTimer.start(timeUntilFade * 1000);
         qDebug() << "started timer";
     }
 }

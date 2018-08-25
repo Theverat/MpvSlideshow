@@ -20,6 +20,7 @@ enum class Fade {
 class MpvWidget Q_DECL_FINAL: public QOpenGLWidget, protected QOpenGLFunctions
 {
     Q_OBJECT
+    
 public:
     MpvWidget(QWidget *parent = 0, Qt::WindowFlags f = 0);
     ~MpvWidget();
@@ -29,21 +30,26 @@ public:
     //QSize sizeHint() const { return QSize(480, 270);}
     void setFadeDuration(double seconds);
     double getFadeDuration() const;
+    
 public slots:
     void startFadeToBlack();
     void startFadeFromBlack();
+    
 signals:
     void durationChanged(int value);
     void positionChanged(int value);
     void fileLoaded(const QString &filepath);
+    
 protected:
     void drawFade();
     void initializeGL() Q_DECL_OVERRIDE;
     void paintGL() Q_DECL_OVERRIDE;
+    
 private slots:
     void swapped();
     void on_mpv_events();
     void maybeUpdate();
+    
 private:
     void checkShouldVideoFade();
     void handle_mpv_event(mpv_event *event);

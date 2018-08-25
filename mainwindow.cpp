@@ -20,8 +20,8 @@ MainWindow::MainWindow(QWidget *parent)
 {
     ui->setupUi(this);
     ui->videoSeekBar->setStyle(new MyStyle(ui->videoSeekBar->style()));
-    mpv = ui->mpvWidget;
-    slideshow = new Slideshow(ui->mpvWidget, this);
+    compositor = ui->compositor;
+    slideshow = new Slideshow(ui->compositor, this);
     
     shortcutOpen = new QShortcut(QKeySequence(tr("Ctrl+O", "Open")), this);
     shortcutPrev = new QShortcut(QKeySequence(tr("Left", "Previous")), this);
@@ -40,9 +40,9 @@ MainWindow::MainWindow(QWidget *parent)
     connect(ui->imageDuration, SIGNAL(valueChanged(double)), slideshow, SLOT(setImageDuration(double)));
     connect(ui->videoSeekBar, SIGNAL(valueChanged(int)), slideshow, SLOT(seek(int)));
     
-    connect(mpv, SIGNAL(positionChanged(int)), this, SLOT(handleVideoPositionChange(int)));
-    connect(mpv, SIGNAL(durationChanged(int)), this, SLOT(setSliderRange(int)));
-    connect(mpv, SIGNAL(fileLoaded(QString)), slideshow, SLOT(handleFileLoaded(QString)));
+//    connect(mpv, SIGNAL(positionChanged(int)), this, SLOT(handleVideoPositionChange(int)));
+//    connect(mpv, SIGNAL(durationChanged(int)), this, SLOT(setSliderRange(int)));
+//    connect(mpv, SIGNAL(fileLoaded(QString)), slideshow, SLOT(handleFileLoaded(QString)));
 }
 
 MainWindow::~MainWindow() {
@@ -77,7 +77,8 @@ void MainWindow::handleVideoPositionChange(int pos) {
 // Show a directory selection dialog and open the images in the chosen directory
 void MainWindow::openDialog() {
     // test
-    slideshow->openDir("/home/simon/Bilder/Fotos/Fotos_Berlin");
+//    slideshow->openDir("/home/simon/Bilder/Fotos/Fotos_Berlin");
+//    ui->openGLWidget->command(QStringList() << "loadfile" << "/home/simon/Bilder/Fotos/Fotos_Berlin/000006a_000010.mov");
 //    slideshow->open("/home/simon/Bilder/Fotos/Fotos_Heimgarten/Auswahl/von Opa");
     return;
     

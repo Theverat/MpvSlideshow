@@ -10,12 +10,16 @@ HEADERS = \
     mainwindow.h \
     slideshow.h \
     sliderstyle.h \
-    exifparser.h
+    exifparser.h \
+    compositor.h \
+    mpvinterface.h
 SOURCES = main.cpp \
     mpvwidget.cpp \
     mainwindow.cpp \
     slideshow.cpp \
-    exifparser.cpp
+    exifparser.cpp \
+    compositor.cpp \
+    mpvinterface.cpp
 
 FORMS += \
     mainwindow.ui

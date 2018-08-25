@@ -3,7 +3,7 @@
 
 #include <QMainWindow>
 
-class MpvWidget;
+class Compositor;
 class Slideshow;
 class QShortcut;
 
@@ -29,7 +29,7 @@ private slots:
     
 private:
     Ui::MainWindow *ui;
-    MpvWidget *mpv;
+    Compositor *compositor;
     Slideshow *slideshow;
     
     QShortcut *shortcutOpen;

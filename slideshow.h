@@ -4,14 +4,14 @@
 #include <QObject>
 #include <QTimer>
 
-class MpvWidget;
+class Compositor;
 
 
 class Slideshow : public QObject
 {
     Q_OBJECT
 public:
-    Slideshow(MpvWidget *mpvWidget, QObject* parent = 0);
+    Slideshow(Compositor *compositor, QObject* parent = 0);
     
 public slots:
     void openDir(const QString &path);
@@ -25,7 +25,7 @@ public slots:
     void handleFileLoaded(const QString &filepath);
     
 private:
-    MpvWidget *mpv;
+    Compositor *compositor;
     double imageDuration = 7.0;
     QString currentDirPath;
     QString currentFilePath;
