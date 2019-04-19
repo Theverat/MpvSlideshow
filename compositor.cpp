@@ -10,6 +10,10 @@ Compositor::Compositor(QWidget *parent, Qt::WindowFlags f)
     for (int i = 0; i < 3; ++i) {
         mpvInstances.emplace_back(new MpvInterface());
     }
+    
+    prev = nullptr;
+    current = nullptr;
+    next = nullptr;
 }
 
 Compositor::~Compositor() {
@@ -17,6 +21,14 @@ Compositor::~Compositor() {
         makeCurrent();
         delete mpv;
     }
+}
+
+void Compositor::load(const QStringList &paths) {
+    this->paths = paths;
+}
+
+void Compositor::loadNext() {
+    
 }
 
 //------------------------------------------------------------------
@@ -33,20 +45,21 @@ void Compositor::initializeGL() {
     connect(this, SIGNAL(frameSwapped()), this, SLOT(swapped()));
     
     // test TODO remove
-    QString filepath = "/home/simon/Videos/Kazam_screencast_00001.mp4";
+    QString filepath = "/home/simon/Videos/Kazam_screencast_00000.mp4";
     mpvInstances[0]->command(QStringList() << "loadfile" << filepath);
     mpvInstances[0]->setProperty("image-display-duration", "inf");
     
-    filepath = "/home/simon/Videos/mix_example.mp4";
+    filepath = "/home/simon/Videos/Kazam_screencast_00001.mp4";
     mpvInstances[1]->command(QStringList() << "loadfile" << filepath);
     mpvInstances[1]->setProperty("image-display-duration", "inf");
     
-    filepath = "/home/simon/Videos/chains_problem.mp4";
+    filepath = "/home/simon/Videos/vsync tearing test-9hIRq5HTh5s.mp4";
     mpvInstances[2]->command(QStringList() << "loadfile" << filepath);
     mpvInstances[2]->setProperty("image-display-duration", "inf");
 }
 
 void Compositor::paintGL() {
+    /*
     for (MpvInterface *mpv : mpvInstances) {
         mpv->paintGL(width(), height());
     }
@@ -69,6 +82,17 @@ void Compositor::paintGL() {
         glDisable(GL_TEXTURE_2D);
         
         alpha -= 0.33f;
+    }
+    */
+    
+    if (current) {
+        current->paintGL(width(), height());
+        makeCurrent();
+        
+        glEnable(GL_TEXTURE_2D);
+        glBindTexture(GL_TEXTURE_2D, current->getFbo()->texture());
+        drawFullscreenQuad(1.f);
+        glDisable(GL_TEXTURE_2D);
     }
 }
 

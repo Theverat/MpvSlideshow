@@ -27,7 +27,7 @@ public:
 signals:
     void positionChanged(int value);
     void durationChanged(int value);
-    void updateSignal();
+    void updateSignal(); // TODO remove?
     
 private slots:
     void maybeUpdate();

@@ -3,6 +3,7 @@
 
 #include <QtWidgets/QOpenGLWidget>
 #include <QOpenGLFunctions>
+#include <QStringList>
 
 #include <vector>
 
@@ -16,8 +17,8 @@ class Compositor Q_DECL_FINAL : public QOpenGLWidget, protected QOpenGLFunctions
 public:
     Compositor(QWidget *parent = 0, Qt::WindowFlags f = 0);
     virtual ~Compositor();
-    
-    std::vector<MpvInterface*> mpvInstances;
+    void load(const QStringList& paths);
+    void loadNext();
     
 protected:
     void initializeGL() Q_DECL_OVERRIDE;
@@ -29,6 +30,12 @@ private slots:
     
 private:
     void drawFullscreenQuad(float alpha);
+    
+    std::vector<MpvInterface*> mpvInstances;
+    MpvInterface *prev;
+    MpvInterface *current;
+    MpvInterface *next;
+    QStringList paths;
 };
 
 #endif // COMPOSITOR_H
