@@ -2,6 +2,7 @@
 #include "mpvinterface.h"
 
 #include <QMetaObject>
+#include <QDebug>
 
 
 Compositor::Compositor(QWidget *parent, Qt::WindowFlags f)
@@ -9,11 +10,16 @@ Compositor::Compositor(QWidget *parent, Qt::WindowFlags f)
 {
     for (int i = 0; i < 3; ++i) {
         mpvInstances.emplace_back(new MpvInterface());
+        alphas.push_back(1.f);
     }
     
-    prev = nullptr;
-    current = nullptr;
-    next = nullptr;
+    prev = mpvInstances[0];
+    current = mpvInstances[1];
+    next = mpvInstances[2];
+    
+    prevAlpha = &alphas[0];
+    currentAlpha = &alphas[1];
+    nextAlpha = &alphas[2];
 }
 
 Compositor::~Compositor() {
@@ -23,12 +29,45 @@ Compositor::~Compositor() {
     }
 }
 
-void Compositor::load(const QStringList &paths) {
+void Compositor::setPaths(const QStringList &paths) {
     this->paths = paths;
 }
 
 void Compositor::loadNext() {
+    qDebug() << "loadNext";
     
+    const int newIndex = index + 1;
+    if (index >= paths.size()) {
+        qDebug() << "Can not load next: index out of range:" << newIndex;
+        return;
+    }
+    index = newIndex;
+    
+    prev->stop();
+    MpvInterface *temp = prev;
+    prev = current;
+    current = next;
+    next = temp;
+    
+    float *tempAlpha = prevAlpha;
+    prevAlpha = currentAlpha;
+    currentAlpha = nextAlpha;
+    nextAlpha = tempAlpha;
+    
+    *prevAlpha = 0.f;
+    *currentAlpha = 1.f;
+    *nextAlpha = 0.f;
+    
+    if (index == 0) {
+        qDebug() << "loading first in list";
+        current->load(paths.at(index));
+    } else {
+        current->setPaused(false);
+    }
+    next->load(paths.at(index + 1));
+    next->setPaused(true);
+    
+    fadeTimer.start();
 }
 
 //------------------------------------------------------------------
@@ -43,55 +82,49 @@ void Compositor::initializeGL() {
     }
     
     connect(this, SIGNAL(frameSwapped()), this, SLOT(swapped()));
-    
-    // test TODO remove
-    QString filepath = "/home/simon/Videos/Kazam_screencast_00000.mp4";
-    mpvInstances[0]->command(QStringList() << "loadfile" << filepath);
-    mpvInstances[0]->setProperty("image-display-duration", "inf");
-    
-    filepath = "/home/simon/Videos/Kazam_screencast_00001.mp4";
-    mpvInstances[1]->command(QStringList() << "loadfile" << filepath);
-    mpvInstances[1]->setProperty("image-display-duration", "inf");
-    
-    filepath = "/home/simon/Videos/vsync tearing test-9hIRq5HTh5s.mp4";
-    mpvInstances[2]->command(QStringList() << "loadfile" << filepath);
-    mpvInstances[2]->setProperty("image-display-duration", "inf");
 }
 
 void Compositor::paintGL() {
-    /*
+    const float elapsed = fadeTimer.elapsed() / 1000.f;
+    const float elapsedNormalized = elapsed / fadeDuration;
+    *prevAlpha = 1.f - elapsedNormalized;
+    *currentAlpha = elapsedNormalized;
+    
+    if (elapsed >= fadeDuration) {
+        // We are done fading
+        // TODO maybe move to own method
+        if (!prev->isPaused())
+            prev->setPaused(true);
+        
+        qDebug() << "NOT FADING";
+    } else {
+        qDebug() << "elapsedNorm:" << elapsedNormalized;
+    }
+    
     for (MpvInterface *mpv : mpvInstances) {
+//        qDebug() << "paintGL" << index++;
         mpv->paintGL(width(), height());
     }
-//    mpvInstances[0]->paintGL(width(), height());
     makeCurrent();
     
-//    glEnable(GL_COLOR_MATERIAL);
-//    glEnable(GL_TEXTURE_2D);
-//    glBindTexture(GL_TEXTURE_2D, mpvInstances[0]->getFbo()->texture());
-//    drawFullscreenQuad(0.5f);
-//    glDisable(GL_TEXTURE_2D);
-//    glDisable(GL_COLOR_MATERIAL);
-    
-    // TODO use a fragment shader for mixing
-    float alpha = 1.f;
-    for (MpvInterface *mpv : mpvInstances) {
+    for (int i = 0; i < 3; ++i) {
+        MpvInterface *mpv = mpvInstances[i];
+        const float alpha = alphas[i];
+        
+        // debug
+//        float r, g, b;
+//        r = g = b = 0.f;
+//        if (mpv == prev)
+//            r = 1.f;
+//        if (mpv == current)
+//            g = 1.f;
+//        if (mpv == next)
+//            b = 1.f;
+        
         glEnable(GL_TEXTURE_2D);
         glBindTexture(GL_TEXTURE_2D, mpv->getFbo()->texture());
+//        drawFullscreenQuad(r, g, b, alpha);
         drawFullscreenQuad(alpha);
-        glDisable(GL_TEXTURE_2D);
-        
-        alpha -= 0.33f;
-    }
-    */
-    
-    if (current) {
-        current->paintGL(width(), height());
-        makeCurrent();
-        
-        glEnable(GL_TEXTURE_2D);
-        glBindTexture(GL_TEXTURE_2D, current->getFbo()->texture());
-        drawFullscreenQuad(1.f);
         glDisable(GL_TEXTURE_2D);
     }
 }
@@ -131,6 +164,10 @@ void Compositor::maybeUpdate() {
 // private
 
 void Compositor::drawFullscreenQuad(float alpha) {
+    drawFullscreenQuad(1.f, 1.f, 1.f, alpha);
+}
+
+void Compositor::drawFullscreenQuad(float r, float g, float b, float alpha) {
     glMatrixMode(GL_PROJECTION);
     glLoadIdentity();
     glMatrixMode(GL_MODELVIEW);
@@ -138,7 +175,7 @@ void Compositor::drawFullscreenQuad(float alpha) {
     
     glEnable(GL_BLEND);
     glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
-    glColor4f(1.f, 1.f, 1.f, alpha);
+    glColor4f(r, g, b, alpha);
     
     glBegin(GL_QUADS);
     {

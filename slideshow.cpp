@@ -35,7 +35,8 @@ void Slideshow::openDir(const QString &path) {
     if (files.empty())
         return;
     
-    loadFile(files.at(0));
+    compositor->setPaths(files);
+    compositor->loadNext();
 }
 
 bool Slideshow::togglePause() {
@@ -105,7 +106,13 @@ void Slideshow::loadNeighbour(bool right) {
         // Or some text ("the end")
         return;
     
-    loadFile(files.at(neighbourIndex));
+//    loadFile(files.at(neighbourIndex));
+    compositor->setPaths(files);
+    if (right) {
+        compositor->loadNext();
+    } else {
+        qDebug() << "loadPrev() not implemented yet";
+    }
 }
 
 void Slideshow::loadFile(const QString &filepath) {

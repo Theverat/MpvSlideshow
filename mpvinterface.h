@@ -24,6 +24,11 @@ public:
     void setProperty(const QString& name, const QVariant& value);
     QVariant getProperty(const QString& name) const;
     
+    void load(const QString &filepath);
+    void setPaused(bool value);
+    bool isPaused() const;
+    void stop();
+    
 signals:
     void positionChanged(int value);
     void durationChanged(int value);

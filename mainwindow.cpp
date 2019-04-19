@@ -76,10 +76,8 @@ void MainWindow::handleVideoPositionChange(int pos) {
 
 // Show a directory selection dialog and open the images in the chosen directory
 void MainWindow::openDialog() {
-    // test
-//    slideshow->openDir("/home/simon/Bilder/Fotos/Fotos_Berlin");
-//    ui->openGLWidget->command(QStringList() << "loadfile" << "/home/simon/Bilder/Fotos/Fotos_Berlin/000006a_000010.mov");
-//    slideshow->open("/home/simon/Bilder/Fotos/Fotos_Heimgarten/Auswahl/von Opa");
+    
+    slideshow->openDir("/home/simon/Bilder/mpvslideshowteset");
     return;
     
     QFileDialog dialog(this);
@@ -92,5 +90,6 @@ void MainWindow::openDialog() {
     }
     
     const QString path = dialog.selectedFiles().at(0);
+    qDebug() << "opening Dir:" << path;
     slideshow->openDir(path);
 }

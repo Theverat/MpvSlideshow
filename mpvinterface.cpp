@@ -99,6 +99,24 @@ QVariant MpvInterface::getProperty(const QString &name) const {
     return mpv::qt::get_property_variant(mpv, name);
 }
 
+void MpvInterface::load(const QString &filepath) {
+    qDebug() << "mpvInstance loading file:" << filepath;
+    command(QStringList() << "loadfile" << filepath);
+    setProperty("image-display-duration", "inf");
+}
+
+void MpvInterface::setPaused(bool value) {
+    setProperty("pause", value);
+}
+
+bool MpvInterface::isPaused() const {
+    return getProperty("pause").toBool();
+}
+
+void MpvInterface::stop() {
+    command("stop");
+}
+
 //------------------------------------------------------------------
 // private slots
 
