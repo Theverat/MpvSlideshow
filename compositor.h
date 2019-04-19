@@ -45,6 +45,8 @@ private:
     int index = -1;
     QElapsedTimer fadeTimer;
     float fadeDuration = 2.f;
+    // for debugging the stutter
+    QElapsedTimer betweenPaints;
 };
 
 #endif // COMPOSITOR_H

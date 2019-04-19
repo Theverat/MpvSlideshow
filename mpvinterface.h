@@ -3,6 +3,7 @@
 
 #include <QObject>
 #include <QOpenGLFramebufferObject>
+#include <QElapsedTimer>
 
 #include <mpv/client.h>
 #include <mpv/opengl_cb.h>
@@ -21,6 +22,7 @@ public:
     QOpenGLFramebufferObject *getFbo();
     
     void command(const QVariant& params);
+    void command_async(const QVariant& params);
     void setProperty(const QString& name, const QVariant& value);
     QVariant getProperty(const QString& name) const;
     
@@ -45,6 +47,8 @@ private:
     mpv::qt::Handle mpv;
     mpv_opengl_cb_context *mpv_gl;
     QOpenGLFramebufferObject *fbo;
+    
+    QElapsedTimer loadTimer;
 };
 
 #endif // MPVINTERFACE_H

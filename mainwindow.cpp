@@ -78,6 +78,8 @@ void MainWindow::handleVideoPositionChange(int pos) {
 void MainWindow::openDialog() {
     
     slideshow->openDir("/home/simon/Bilder/mpvslideshowteset");
+//    slideshow->openDir("/home/simon/Bilder/mpvslideshowteset/marokko");
+    
     return;
     
     QFileDialog dialog(this);

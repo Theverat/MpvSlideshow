@@ -3,6 +3,7 @@
 
 #include <QMetaObject>
 #include <QDebug>
+#include <QtGlobal> // Q_ASSERT
 
 
 Compositor::Compositor(QWidget *parent, Qt::WindowFlags f)
@@ -34,6 +35,9 @@ void Compositor::setPaths(const QStringList &paths) {
 }
 
 void Compositor::loadNext() {
+    QElapsedTimer t;
+    t.start();
+    
     qDebug() << "loadNext";
     
     const int newIndex = index + 1;
@@ -68,6 +72,8 @@ void Compositor::loadNext() {
     next->setPaused(true);
     
     fadeTimer.start();
+    
+    qDebug() << "Comp::loadNext took" << t.elapsed() << "ms";
 }
 
 //------------------------------------------------------------------
@@ -85,7 +91,12 @@ void Compositor::initializeGL() {
 }
 
 void Compositor::paintGL() {
-    const float elapsed = fadeTimer.elapsed() / 1000.f;
+    const int msSinceLast = betweenPaints.isValid() ? betweenPaints.elapsed() : 0;
+    
+    QElapsedTimer t;
+    t.start();
+    
+    const float elapsed = fadeTimer.isValid() ? fadeTimer.elapsed() / 1000.f : 0.f;
     const float elapsedNormalized = elapsed / fadeDuration;
     *prevAlpha = 1.f - elapsedNormalized;
     *currentAlpha = elapsedNormalized;
@@ -93,48 +104,66 @@ void Compositor::paintGL() {
     if (elapsed >= fadeDuration) {
         // We are done fading
         // TODO maybe move to own method
-        if (!prev->isPaused())
+        if (!prev->isPaused()) {
             prev->setPaused(true);
-        
-        qDebug() << "NOT FADING";
-    } else {
-        qDebug() << "elapsedNorm:" << elapsedNormalized;
+        }
     }
     
-    for (MpvInterface *mpv : mpvInstances) {
-//        qDebug() << "paintGL" << index++;
-        mpv->paintGL(width(), height());
+    for (int i = 0; i < 3; ++i) {
+        const float alpha = alphas[i];
+        
+        if (alpha > 0.f) {
+            MpvInterface *mpv = mpvInstances[i];
+            mpv->paintGL(width(), height());
+        }
     }
     makeCurrent();
     
     for (int i = 0; i < 3; ++i) {
-        MpvInterface *mpv = mpvInstances[i];
         const float alpha = alphas[i];
         
-        // debug
-//        float r, g, b;
-//        r = g = b = 0.f;
-//        if (mpv == prev)
-//            r = 1.f;
-//        if (mpv == current)
-//            g = 1.f;
-//        if (mpv == next)
-//            b = 1.f;
-        
-        glEnable(GL_TEXTURE_2D);
-        glBindTexture(GL_TEXTURE_2D, mpv->getFbo()->texture());
-//        drawFullscreenQuad(r, g, b, alpha);
-        drawFullscreenQuad(alpha);
-        glDisable(GL_TEXTURE_2D);
+        if (alpha > 0.f) {
+            // debug
+//            float r, g, b;
+//            r = g = b = 0.f;
+//            if (mpv == prev)
+//                r = 1.f;
+//            if (mpv == current)
+//                g = 1.f;
+//            if (mpv == next)
+//                b = 1.f;
+            
+            MpvInterface *mpv = mpvInstances[i];
+            
+            glEnable(GL_TEXTURE_2D);
+            glBindTexture(GL_TEXTURE_2D, mpv->getFbo()->texture());
+//            drawFullscreenQuad(r, g, b, alpha);
+            drawFullscreenQuad(alpha);
+            glDisable(GL_TEXTURE_2D);
+        }
     }
+    
+//    if (t.elapsed() > 41 || msSinceLast > 30)
+        qDebug() << "paint" << t.elapsed() << "ms, since last:" << msSinceLast << "ms, elapsedNorm:" << elapsedNormalized << "core-idle:" << current->getProperty("core-idle").toBool();
+    betweenPaints.start();
+    
+    Q_ASSERT(msSinceLast < 100);
 }
 
 //------------------------------------------------------------------
 // private slots
 
 void Compositor::swapped() {
-    for (MpvInterface *mpv : mpvInstances) {
-        mpv->swapped();
+//    for (MpvInterface *mpv : mpvInstances) {
+//        mpv->swapped();
+//    }
+    for (int i = 0; i < 3; ++i) {
+        const float alpha = alphas[i];
+        
+        if (alpha > 0.f) {
+            MpvInterface *mpv = mpvInstances[i];
+            mpv->swapped();
+        }
     }
     // Immediately schedule the next paintGL() call
     update();
