@@ -125,7 +125,7 @@ void MpvInterface::load(const QString &filepath) {
     currentFilePath = filepath;
     command(QStringList() << "loadfile" << filepath);
     setProperty("image-display-duration", "inf");
-    setProperty("mute", true); // TODO just for debugging
+//    setProperty("mute", true); // TODO just for debugging
 }
 
 void MpvInterface::setPaused(bool value) {

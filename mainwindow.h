@@ -22,13 +22,13 @@ public:
 public slots:
     void togglePause();
     void setSeekBarVisible(bool value);
+    void setSliderRange(int duration);
+    void handleVideoPositionChange(int pos);
     
 protected:
     void closeEvent(QCloseEvent *event);
     
 private slots:
-    void setSliderRange(int duration);
-    void handleVideoPositionChange(int pos);
     void openDialog();
     
 protected:

@@ -48,6 +48,7 @@ public slots:
 protected:
     void initializeGL() Q_DECL_OVERRIDE;
     void paintGL() Q_DECL_OVERRIDE;
+    void drawMpvInstance(MpvInterface *mpv, float alpha, int volume);
     
 private slots:
     void swapped();
@@ -68,13 +69,9 @@ private:
     
     MainWindow *mainwindow;
     std::vector<MpvInterface*> mpvInstances;
-    std::vector<float> alphas;
     MpvInterface *prev;
     MpvInterface *current;
     MpvInterface *next;
-    float *prevAlpha;
-    float *currentAlpha;
-    float *nextAlpha;
     
     // Slideshow management
     int index = -1; // Current index

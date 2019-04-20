@@ -12,16 +12,11 @@ Compositor::Compositor(QWidget *parent, Qt::WindowFlags f)
 {
     for (int i = 0; i < 3; ++i) {
         mpvInstances.emplace_back(new MpvInterface());
-        alphas.push_back(1.f);
     }
     
     prev = mpvInstances[0];
     current = mpvInstances[1];
     next = mpvInstances[2];
-    
-    prevAlpha = &alphas[0];
-    currentAlpha = &alphas[1];
-    nextAlpha = &alphas[2];
     
     reset();
     
@@ -109,22 +104,17 @@ void Compositor::previousFile() {
     current = prev;
     prev = temp;
     
-    float *tempAlpha = nextAlpha;
-    nextAlpha = currentAlpha;
-    currentAlpha = prevAlpha;
-    prevAlpha = tempAlpha;
-    
-    *prevAlpha = 0.f;
-    *currentAlpha = 1.f;
-    *nextAlpha = 0.f;
-    
     mainwindow->setSeekBarVisible(!isImage(paths.at(index)));
     disconnect(prev, 0, 0, 0);
     disconnect(next, 0, 0, 0);
     connect(current, SIGNAL(positionChanged(int)), mainwindow, SLOT(handleVideoPositionChange(int)));
-    connect(current, SIGNAL(durationChanged(int)), mainwindow, SLOT(setSliderRange(int)));
+//    connect(current, SIGNAL(durationChanged(int)), mainwindow, SLOT(setSliderRange(int)));
+    mainwindow->setSliderRange(current->getProperty("duration").toInt());
     
+    // Videos begin to play even when slideshow is paused (I consider this 
+    // a feature, for when I want to manually flip through a slideshow)
     current->setPaused(false);
+    
     if (index - 1 >= 0) {
         prev->load(paths.at(index - 1));
         prev->setPaused(true);
@@ -151,25 +141,19 @@ void Compositor::nextFile() {
     current = next;
     next = temp;
     
-    float *tempAlpha = prevAlpha;
-    prevAlpha = currentAlpha;
-    currentAlpha = nextAlpha;
-    nextAlpha = tempAlpha;
-    
-    *prevAlpha = 0.f;
-    *currentAlpha = 1.f;
-    *nextAlpha = 0.f;
-    
     mainwindow->setSeekBarVisible(!isImage(paths.at(index)));
     disconnect(prev, 0, 0, 0);
     disconnect(next, 0, 0, 0);
     connect(current, SIGNAL(positionChanged(int)), mainwindow, SLOT(handleVideoPositionChange(int)));
-    connect(current, SIGNAL(durationChanged(int)), mainwindow, SLOT(setSliderRange(int)));
+//    connect(current, SIGNAL(durationChanged(int)), mainwindow, SLOT(setSliderRange(int)));
+    mainwindow->setSliderRange(current->getProperty("duration").toInt());
     
     if (firstLoad) {
         current->load(paths.at(index));
         current->setPaused(true);
     } else {
+        // Videos begin to play even when slideshow is paused (I consider this 
+        // a feature, for when I want to manually flip through a slideshow)
         current->setPaused(false);
     }
     
@@ -210,19 +194,32 @@ void Compositor::paintGL() {
 //    QElapsedTimer t;
 //    t.start();
     
-    const float elapsed = fadeTimer.isValid() ? fadeTimer.elapsed() / 1000.f : 0.f;
-    float elapsedNormalized = clamp(elapsed / getFadeDuration());
+    const float elapsed = fadeTimer.isValid() ? (fadeTimer.elapsed() / 1000.f) : 0.f;
+    const float clampedFadeDuration = getFadeDuration();
+    const float elapsedNormalized = clampedFadeDuration ? clamp(elapsed / clampedFadeDuration) : 1.f;
     
-    if (fadeBackwards) {
-        *prevAlpha = 0.f;
-        *nextAlpha = 1.f - elapsedNormalized;
-    } else {
-        *prevAlpha = 1.f - elapsedNormalized;
-        *nextAlpha = 0.f;
-    }
-    *currentAlpha = elapsedNormalized;
+    // We always blend between two buffers
+    MpvInterface * const other = fadeBackwards ? next : prev;
     
-    if (!fadeEndHandled && elapsed >= getFadeDuration()) {
+    // Draw into FBOs
+    other->paintGL(width(), height());
+    current->paintGL(width(), height());
+    
+    // The FBO drawing above happens in different 
+    // OpenGL contexts, so we have to switch back
+    makeCurrent();
+    
+    // Draw background with full opacity, volume decreases over time
+    const int otherVolume = (1.f - elapsedNormalized) * 100.f;
+    const float otherAlpha = 1.f;
+    drawMpvInstance(other, otherAlpha, otherVolume);
+    
+    // Fade to current image (opacity and volume increase over time)
+    const int currentVolume = elapsedNormalized * 100.f;
+    const float currentAlpha = elapsedNormalized;
+    drawMpvInstance(current, currentAlpha, currentVolume);
+    
+    if (!fadeEndHandled && elapsed >= clampedFadeDuration) {
         // We are done fading
         prev->setPaused(true);
         prev->command_async(QVariantList() << "seek" << 0 << "absolute");
@@ -231,63 +228,36 @@ void Compositor::paintGL() {
         fadeEndHandled = true;
     }
     
-    for (int i = 0; i < 3; ++i) {
-        const float alpha = alphas[i];
-        
-        if (alpha > 0.f) {
-            MpvInterface *mpv = mpvInstances[i];
-            mpv->paintGL(width(), height());
-        }
-    }
-    makeCurrent();
-    
-    for (int i = 0; i < 3; ++i) {
-        const float alpha = alphas[i];
-        
-        if (alpha > 0.f) {
-            MpvInterface *mpv = mpvInstances[i];
-            
-            // debug
-//            float r, g, b;
-//            r = g = b = 0.f;
-//            if (mpv == prev)
-//                r = 1.f;
-//            if (mpv == current)
-//                g = 1.f;
-//            if (mpv == next)
-//                b = 1.f;
-            
-            mpv->setProperty("volume", static_cast<int>(alpha * 100.f));
-            
-            glEnable(GL_TEXTURE_2D);
-            glBindTexture(GL_TEXTURE_2D, mpv->getFbo()->texture());
-//            drawFullscreenQuad(r, g, b, alpha);
-            drawFullscreenQuad(alpha);
-            glDisable(GL_TEXTURE_2D);
-        }
-    }
-    
 //    qDebug() << "paint" << t.elapsed() << "ms, since last:" << msSinceLast << "ms, elapsedNorm:" << elapsedNormalized;
 //    betweenPaints.start();
     
 //    Q_ASSERT(msSinceLast < 100);
 }
 
+void Compositor::drawMpvInstance(MpvInterface *mpv, float alpha, int volume) {
+    mpv->setPropertyAsync("volume", volume);
+    
+    glEnable(GL_TEXTURE_2D);
+    glBindTexture(GL_TEXTURE_2D, mpv->getFbo()->texture());
+    drawFullscreenQuad(alpha);
+    glDisable(GL_TEXTURE_2D);
+}
+
 //------------------------------------------------------------------
 // private slots
 
 void Compositor::swapped() {
-//    for (MpvInterface *mpv : mpvInstances) {
-//        mpv->swapped();
-//    }
-    for (int i = 0; i < 3; ++i) {
-        const float alpha = alphas[i];
-        
-        if (alpha > 0.f) {
-            MpvInterface *mpv = mpvInstances[i];
-            mpv->swapped();
-        }
+    for (MpvInterface *mpv : mpvInstances) {
+        mpv->swapped();
     }
+//    for (int i = 0; i < 3; ++i) {
+//        const float alpha = alphas[i];
+        
+//        if (alpha > 0.f) {
+//            MpvInterface *mpv = mpvInstances[i];
+//            mpv->swapped();
+//        }
+//    }
     // Immediately schedule the next paintGL() call
     update();
 }
