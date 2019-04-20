@@ -21,6 +21,7 @@ MainWindow::MainWindow(QWidget *parent)
     ui->setupUi(this);
     ui->videoSeekBar->setStyle(new MyStyle(ui->videoSeekBar->style()));
     compositor = ui->compositor;
+    compositor->setMainWindow(this);
     setMouseTracking(true);
     ui->centralwidget->setMouseTracking(true);
     ui->compositor->setMouseTracking(true);
@@ -53,7 +54,7 @@ MainWindow::MainWindow(QWidget *parent)
 
 MainWindow::~MainWindow() {
     delete ui;
-    qDebug() << "ui deleted";
+    qDebug() << "~MainWindow()";
 }
 
 //------------------------------------------------------------------
@@ -62,6 +63,8 @@ MainWindow::~MainWindow() {
 void MainWindow::togglePause() {
     const bool paused = compositor->togglePause();
     ui->togglePause->setText(paused ? tr("Resume") : tr("Pause"));
+    if (!paused)
+        ui->bottomControls->hide();
 }
 
 //------------------------------------------------------------------
@@ -69,8 +72,10 @@ void MainWindow::togglePause() {
 
 void MainWindow::closeEvent(QCloseEvent *event) {
     writeSettings();
-    qDebug() << "wrote settings";
     event->accept();
+    
+    // Very dirty workaround for mpv hanging in destructor
+    throw std::runtime_error("quit this shit");
 }
 
 //------------------------------------------------------------------

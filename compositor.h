@@ -11,6 +11,7 @@
 
 
 class MpvInterface;
+class MainWindow;
 
 class Compositor Q_DECL_FINAL : public QOpenGLWidget, protected QOpenGLFunctions
 {
@@ -20,6 +21,10 @@ public:
     Compositor(QWidget *parent = 0, Qt::WindowFlags f = 0);
     void reset();
     virtual ~Compositor();
+    void setMainWindow(MainWindow *mw) {
+        mainwindow = mw;
+    }
+
     void openDir(const QString &path, int index=0);
     QString getCurrentDirPath() const {
         return currentDirPath;
@@ -60,6 +65,7 @@ private:
         return clamp(fadeDuration, 0.f, imageDuration);
     }
     
+    MainWindow *mainwindow;
     std::vector<MpvInterface*> mpvInstances;
     std::vector<float> alphas;
     MpvInterface *prev;

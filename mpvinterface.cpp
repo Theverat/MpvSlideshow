@@ -55,12 +55,15 @@ MpvInterface::MpvInterface(QObject *parent)
 }
 
 MpvInterface::~MpvInterface() {
+    qDebug() << "~MpvInterface()";
     if (mpv_gl)
         mpv_opengl_cb_set_update_callback(mpv_gl, NULL, NULL);
+    qDebug() << "~MpvInterface() 2";
     // Until this call is done, we need to make sure the player remains
     // alive. This is done implicitly with the mpv::qt::Handle instance
     // in this class.
     mpv_opengl_cb_uninit_gl(mpv_gl);
+    qDebug() << "~MpvInterface() Done";
 }
 
 void MpvInterface::initializeGL() {

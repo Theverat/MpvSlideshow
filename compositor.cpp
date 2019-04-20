@@ -1,5 +1,6 @@
 #include "compositor.h"
 #include "mpvinterface.h"
+#include "mainwindow.h"
 
 #include <QDebug>
 #include <QtGlobal> // Q_ASSERT
@@ -47,11 +48,14 @@ void Compositor::reset() {
 }
 
 Compositor::~Compositor() {
+    qDebug() << "~Compositor()";
     for (MpvInterface *mpv : mpvInstances) {
+        qDebug() << "making current";
         makeCurrent();
+        qDebug() << "deleting mpv";
         delete mpv;
-        mpv = nullptr;
     }
+    mpvInstances.clear();
 }
 
 void Compositor::openDir(const QString &path, int index) {
@@ -117,6 +121,10 @@ void Compositor::previousFile() {
     *currentAlpha = 1.f;
     *nextAlpha = 0.f;
     
+    disconnect(prev, 0, 0, 0);
+    disconnect(next, 0, 0, 0);
+    connect(current, SIGNAL(positionChanged(int)), mainwindow, SLOT(handleVideoPositionChange(int)));
+    
     current->setPaused(false);
     if (index - 1 >= 0) {
         prev->load(paths.at(index - 1));
@@ -153,6 +161,11 @@ void Compositor::nextFile() {
     *prevAlpha = 0.f;
     *currentAlpha = 1.f;
     *nextAlpha = 0.f;
+    
+    disconnect(prev, 0, 0, 0);
+    disconnect(next, 0, 0, 0);
+    connect(current, SIGNAL(positionChanged(int)), mainwindow, SLOT(handleVideoPositionChange(int)));
+    connect(current, SIGNAL(durationChanged(int)), mainwindow, SLOT(setSliderRange(int)));
     
     if (firstLoad) {
         current->load(paths.at(index));
