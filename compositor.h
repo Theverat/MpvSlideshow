@@ -64,6 +64,7 @@ private:
     QElapsedTimer fadeTimer;
     QTimer nextTimer;
     double fadeDuration = 1.0;
+    bool fadeBackwards = false;
     double imageDuration = 3.0;
     QString currentDirPath;
     QString currentFilePath;

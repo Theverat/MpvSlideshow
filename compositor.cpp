@@ -74,7 +74,38 @@ bool Compositor::togglePause() {
 // public slots
 
 void Compositor::previousFile() {
+    const int newIndex = index - 1;
+    if (newIndex < 0) {
+        qDebug() << "Can not load previous: index out of range:" << newIndex;
+        return;
+    }
+    index = newIndex;
     
+    next->stop();
+    MpvInterface *temp = next;
+    next = current;
+    current = prev;
+    prev = temp;
+    
+    float *tempAlpha = nextAlpha;
+    nextAlpha = currentAlpha;
+    currentAlpha = prevAlpha;
+    prevAlpha = tempAlpha;
+    
+    *prevAlpha = 0.f;
+    *currentAlpha = 1.f;
+    *nextAlpha = 0.f;
+    
+    if (index - 1 >= 0) {
+        prev->load(paths.at(index - 1));
+        prev->setPaused(true);
+    }
+    
+    fadeBackwards = true;
+    fadeTimer.start();
+    if (!paused) {
+        startNextTimer();
+    }
 }
 
 void Compositor::nextFile() {
@@ -114,8 +145,8 @@ void Compositor::nextFile() {
         next->setPaused(true);
     }
     
+    fadeBackwards = false;
     fadeTimer.start();
-    
     if (!paused) {
         startNextTimer();
     }
@@ -143,9 +174,16 @@ void Compositor::paintGL() {
     t.start();
     
     const float elapsed = fadeTimer.isValid() ? fadeTimer.elapsed() / 1000.f : 0.f;
-    const float elapsedNormalized = elapsed / fadeDuration;
-    *prevAlpha = clamp(1.f - elapsedNormalized);
-    *currentAlpha = clamp(elapsedNormalized);
+    float elapsedNormalized = clamp(elapsed / fadeDuration);
+    
+    if (fadeBackwards) {
+        *prevAlpha = 0.f;
+        *nextAlpha = 1.f - elapsedNormalized;
+    } else {
+        *prevAlpha = 1.f - elapsedNormalized;
+        *nextAlpha = 0.f;
+    }
+    *currentAlpha = elapsedNormalized;
     
     if (elapsed >= fadeDuration) {
         // We are done fading
@@ -153,7 +191,9 @@ void Compositor::paintGL() {
         if (!prev->isPaused()) {
             prev->setPaused(true);
         }
-//        next->rotateFromExif();
+        if (!next->isPaused()) {
+            next->setPaused(true);
+        }
     }
     
     for (int i = 0; i < 3; ++i) {
@@ -170,6 +210,8 @@ void Compositor::paintGL() {
         const float alpha = alphas[i];
         
         if (alpha > 0.f) {
+            MpvInterface *mpv = mpvInstances[i];
+            
             // debug
 //            float r, g, b;
 //            r = g = b = 0.f;
@@ -180,7 +222,6 @@ void Compositor::paintGL() {
 //            if (mpv == next)
 //                b = 1.f;
             
-            MpvInterface *mpv = mpvInstances[i];
             mpv->setProperty("volume", static_cast<int>(alpha * 100.f));
             
             glEnable(GL_TEXTURE_2D);
@@ -191,7 +232,7 @@ void Compositor::paintGL() {
         }
     }
     
-//    qDebug() << "paint" << t.elapsed() << "ms, since last:" << msSinceLast << "ms, elapsedNorm:" << elapsedNormalized;
+    qDebug() << "paint" << t.elapsed() << "ms, since last:" << msSinceLast << "ms, elapsedNorm:" << elapsedNormalized;
     betweenPaints.start();
     
     Q_ASSERT(msSinceLast < 100);
