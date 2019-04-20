@@ -124,36 +124,38 @@ void MainWindow::showEvent(QShowEvent *event) {
 }
 
 void MainWindow::writeSettings() {
-    QSettings qsettings( "simon", "mpvslideshow" );
+    QSettings qsettings("simon", "mpvslideshow");
 
-    qsettings.beginGroup( "mainwindow" );
+    qsettings.beginGroup("mainwindow");
 
-    qsettings.setValue( "geometry", saveGeometry() );
-    qsettings.setValue( "savestate", saveState() );
-    qsettings.setValue( "maximized", isMaximized() );
+    qsettings.setValue("geometry", saveGeometry());
+    qsettings.setValue("savestate", saveState());
+    qsettings.setValue("maximized", isMaximized());
 
     if ( !isMaximized() ) {
-        qsettings.setValue( "pos", pos() );
-        qsettings.setValue( "size", size() );
+        qsettings.setValue("pos", pos());
+        qsettings.setValue("size", size());
     }
     
     qsettings.setValue("lastDir", compositor->getCurrentDirPath());
     qsettings.setValue("lastIndex", compositor->getCurrentIndex());
+    qsettings.setValue("imageDuration", ui->imageDuration->value());
+    qsettings.setValue("fadeDuration", ui->fadeDuration->value());
 
     qsettings.endGroup();
 }
 
 void MainWindow::readSettings() {
-    QSettings qsettings( "simon", "mpvslideshow" );
+    QSettings qsettings("simon", "mpvslideshow");
 
-    qsettings.beginGroup( "mainwindow" );
+    qsettings.beginGroup("mainwindow");
 
-    restoreGeometry(qsettings.value( "geometry", saveGeometry() ).toByteArray());
-    restoreState(qsettings.value( "savestate", saveState() ).toByteArray());
-    move(qsettings.value( "pos", pos() ).toPoint());
-    resize(qsettings.value( "size", size() ).toSize());
+    restoreGeometry(qsettings.value("geometry", saveGeometry()).toByteArray());
+    restoreState(qsettings.value("savestate", saveState()).toByteArray());
+    move(qsettings.value("pos", pos()).toPoint());
+    resize(qsettings.value("size", size()).toSize());
 
-    if ( qsettings.value( "maximized", isMaximized() ).toBool() )
+    if ( qsettings.value("maximized", isMaximized()).toBool())
         showMaximized();
 
     const QString lastDir = qsettings.value("lastDir").toString();
@@ -162,6 +164,10 @@ void MainWindow::readSettings() {
         qDebug() << "Restoring session:" << lastDir << "index:" << lastIndex;
         compositor->openDir(lastDir, lastIndex);
     }
+    if (qsettings.contains("imageDuration"))
+        ui->imageDuration->setValue(qsettings.value("imageDuration").toDouble());
+    if (qsettings.contains("fadeDuration"))
+        ui->fadeDuration->setValue(qsettings.value("fadeDuration").toDouble());
 
     qsettings.endGroup();
 }
