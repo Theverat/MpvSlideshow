@@ -32,6 +32,8 @@ public:
     bool isPaused() const;
     void stop();
     void rotate(int angle);
+    
+public slots:
     void rotateFromExif();
     
 signals:
@@ -50,6 +52,7 @@ private:
     mpv::qt::Handle mpv;
     mpv_opengl_cb_context *mpv_gl;
     QOpenGLFramebufferObject *fbo;
+    QString currentFilePath;
 };
 
 #endif // MPVINTERFACE_H

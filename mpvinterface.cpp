@@ -10,7 +10,6 @@
 
 
 static void wakeup(void *ctx) {
-    // TODO the cause of the stutter?
     QMetaObject::invokeMethod((MpvInterface*)ctx, "on_mpv_events", Qt::QueuedConnection);
 }
 
@@ -52,7 +51,6 @@ MpvInterface::MpvInterface(QObject *parent)
 
     mpv_observe_property(mpv, 0, "duration", MPV_FORMAT_DOUBLE);
     mpv_observe_property(mpv, 0, "time-pos", MPV_FORMAT_DOUBLE);
-    // TODO the cause of the stutter?
     mpv_set_wakeup_callback(mpv, wakeup, this);
 }
 
@@ -121,6 +119,7 @@ QVariant MpvInterface::getProperty(const QString &name) const {
 
 //This is an asnc call that returns immediately
 void MpvInterface::load(const QString &filepath) {
+    currentFilePath = filepath;
     command(QStringList() << "loadfile" << filepath);
     setProperty("image-display-duration", "inf");
     setProperty("mute", true); // TODO just for debugging
@@ -140,31 +139,21 @@ void MpvInterface::stop() {
 }
 
 void MpvInterface::rotate(int angle) {
-    if (getProperty("video-rotate").toInt() != angle) {
-        QElapsedTimer t;
-        t.start();
-        setPropertyAsync("video-rotate", angle);
-        qDebug() << "setting prop took" << t.elapsed() << "ms";
-    }
+    setPropertyAsync("video-rotate", angle);
 }
 
 void MpvInterface::rotateFromExif() {
-    // The cause of the stutter?
-    return;
-    
     QElapsedTimer t;
     t.start();
     
-    const QString filepath = getProperty("path").toString();
-//    const QString filepath = "/home/simon/Bilder/mpvslideshowteset/03.JPG";
-    QFileInfo info(filepath);
+    QFileInfo info(currentFilePath);
     const QString ext = info.suffix().toLower();
     bool validExif = false;
-    qDebug() << "getting fileInfo:" << t.elapsed() << "path:" << filepath;
+    qDebug() << "getting fileInfo:" << t.elapsed() << "path:" << currentFilePath;
     t.start();
     
     if(ext == "jpg" || ext == "jpeg" || ext == "png" || ext == "tif" || ext == "tiff") {
-        ExifParser exif(filepath);
+        ExifParser exif(currentFilePath);
         qDebug() << "Building EXIF parser:" << t.elapsed();
         t.start();
         
@@ -176,14 +165,12 @@ void MpvInterface::rotateFromExif() {
             validExif = true;
             switch(exif.getOrientation()) {
             case 1:
-//                setProperty("video-rotate", 0);
                 rotate(0);
                 break;
             case 2:
 //                image = image.mirrored(true, false);
                 break;
             case 3:
-//                setProperty("video-rotate", 180);
                 rotate(180);
                 break;
             case 4:
@@ -193,7 +180,6 @@ void MpvInterface::rotateFromExif() {
 //                transform = transform.transposed();
                 break;
             case 6:
-//                setProperty("video-rotate", 90);
                 rotate(90);
                 break;
             case 7:
@@ -201,7 +187,6 @@ void MpvInterface::rotateFromExif() {
 //                image = image.mirrored(false, true);
                 break;
             case 8:
-//                setProperty("video-rotate", 270);
                 rotate(270);
                 break;
             }
@@ -209,7 +194,6 @@ void MpvInterface::rotateFromExif() {
     }
     if (!validExif) {
         // No EXIF information, reset rotation
-//        setProperty("video-rotate", 0);
         rotate(0);
     }
     qDebug() << "rotating:" << t.elapsed();
@@ -237,42 +221,36 @@ void MpvInterface::on_mpv_events() {
 // private
 
 void MpvInterface::handle_mpv_event(mpv_event *event) {
-    QElapsedTimer t;
-    t.start();
-    
     switch (event->event_id) {
     case MPV_EVENT_PROPERTY_CHANGE: {
-//        mpv_event_property *prop = (mpv_event_property *)event->data;
-//        const QString propName(prop->name);
+        mpv_event_property *prop = (mpv_event_property *)event->data;
+        const QString propName(prop->name);
         
-//        if (propName == "time-pos") {
-//            if (prop->format == MPV_FORMAT_DOUBLE) {
-//                double time = *(double *)prop->data;
-//                emit positionChanged(time);
-//            }
-//        } else if (propName == "duration") {
-//            if (prop->format == MPV_FORMAT_DOUBLE) {
-//                double time = *(double *)prop->data;
-//                emit durationChanged(time);
-//            }
-//        }
+        if (propName == "time-pos") {
+            if (prop->format == MPV_FORMAT_DOUBLE) {
+                double time = *(double *)prop->data;
+                emit positionChanged(time);
+            }
+        } else if (propName == "duration") {
+            if (prop->format == MPV_FORMAT_DOUBLE) {
+                double time = *(double *)prop->data;
+                emit durationChanged(time);
+            }
+        }
         break;
     }
     case MPV_EVENT_START_FILE: {
         qDebug() << "MPV_EVENT_START_FILE";
-//        rotateFromExif();
+        rotateFromExif();
         break;
     }
     case MPV_EVENT_FILE_LOADED: {
         qDebug() << "MPV_EVENT_FILE_LOADED";
-        rotateFromExif();
         break;
     }
     default: ;
         // Ignore uninteresting or unknown events.
     }
-    
-//    qDebug() << "handle_mpv_event:" << t.elapsed() << "ms";
 }
 
 void MpvInterface::on_update(void *ctx) {

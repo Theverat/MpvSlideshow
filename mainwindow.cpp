@@ -111,6 +111,8 @@ void MainWindow::openDialog() {
     const QString path = dialog.selectedFiles().at(0);
     qDebug() << "opening Dir:" << path;
     compositor->openDir(path);
+    ui->togglePause->setText(tr("Start"));
+    ui->bottomControls->show();
 }
 
 void MainWindow::mouseMoveEvent(QMouseEvent *event) {
