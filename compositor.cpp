@@ -1,9 +1,10 @@
 #include "compositor.h"
 #include "mpvinterface.h"
 
-#include <QMetaObject>
+//#include <QMetaObject>
 #include <QDebug>
 #include <QtGlobal> // Q_ASSERT
+#include <QDir>
 
 
 Compositor::Compositor(QWidget *parent, Qt::WindowFlags f)
@@ -21,6 +22,18 @@ Compositor::Compositor(QWidget *parent, Qt::WindowFlags f)
     prevAlpha = &alphas[0];
     currentAlpha = &alphas[1];
     nextAlpha = &alphas[2];
+    
+    // Slideshow management
+    nextTimer.setSingleShot(true);
+    connect(&nextTimer, SIGNAL(timeout()), this, SLOT(nextFile()));
+    
+    imageFormats << "png" << "jpg" << "jpeg" << "tiff" << "tif"
+                 << "ppm" << "bmp" << "xpm" << "gif";
+    videoFormats << "mp4" << "mov";
+    mediaNameFilter = imageFormats + videoFormats;
+    for (QString &entry : mediaNameFilter) {
+        entry.prepend("*.");
+    }
 }
 
 Compositor::~Compositor() {
@@ -30,16 +43,42 @@ Compositor::~Compositor() {
     }
 }
 
-void Compositor::setPaths(const QStringList &paths) {
-    this->paths = paths;
+void Compositor::openDir(const QString &path) {
+    Q_ASSERT(path.size());
+    
+    QStringList files = getMediaFilesInDir(path);
+    if (files.empty())
+        // TODO go back to same state as after startup
+        return;
+    
+    currentDirPath = path;
+    paths = files;
+    
+    nextFile();
 }
 
-void Compositor::loadNext() {
-    QElapsedTimer t;
-    t.start();
+bool Compositor::togglePause() {
+    if (paths.size() == 0)
+        return paused;
     
-    qDebug() << "loadNext";
+    paused = !paused;
+    if (paused) {
+        nextTimer.stop();
+    } else {
+        startNextTimer();
+    }
+    return paused;
+}
+
+//------------------------------------------------------------------
+// public slots
+
+void Compositor::previousFile() {
     
+}
+
+void Compositor::nextFile() {
+    qDebug() << "nextFile";
     const int newIndex = index + 1;
     if (index >= paths.size()) {
         qDebug() << "Can not load next: index out of range:" << newIndex;
@@ -68,12 +107,18 @@ void Compositor::loadNext() {
     } else {
         current->setPaused(false);
     }
-    next->load(paths.at(index + 1));
-    next->setPaused(true);
+    
+    // Already buffer the next image, if possible
+    if (index + 1 < paths.size()) {
+        next->load(paths.at(index + 1));
+        next->setPaused(true);
+    }
     
     fadeTimer.start();
     
-    qDebug() << "Comp::loadNext took" << t.elapsed() << "ms";
+    if (!paused) {
+        startNextTimer();
+    }
 }
 
 //------------------------------------------------------------------
@@ -145,7 +190,7 @@ void Compositor::paintGL() {
         }
     }
     
-    qDebug() << "paint" << t.elapsed() << "ms, since last:" << msSinceLast << "ms, elapsedNorm:" << elapsedNormalized;
+//    qDebug() << "paint" << t.elapsed() << "ms, since last:" << msSinceLast << "ms, elapsedNorm:" << elapsedNormalized;
     betweenPaints.start();
     
     Q_ASSERT(msSinceLast < 100);
@@ -227,4 +272,31 @@ void Compositor::drawFullscreenQuad(float r, float g, float b, float alpha) {
     
     glDisable(GL_BLEND);
     glColor4f(1.f, 1.f, 1.f, 1.f);
+}
+
+QStringList Compositor::getMediaFilesInDir(const QString &dirPath) const {
+    QDir directory(dirPath);
+    QStringList entryList = directory.entryList(mediaNameFilter, QDir::Files);
+    
+    // The entryList only contains filenames, not full paths - prepend the path
+    for (QString &entry : entryList) {
+        entry = dirPath + QDir::separator() + entry;
+    }
+    return entryList;
+}
+
+bool Compositor::isImage(const QString &filepath) const {
+    QFileInfo fileInfo(filepath);
+    const QString &extension = fileInfo.completeSuffix();
+    return imageFormats.contains(extension.toLower());
+}
+
+void Compositor::startNextTimer() {
+    if (isImage(paths.at(index))) {
+        nextTimer.start(imageDuration * 1000);
+    } else {
+        const double videoLength = current->getProperty("playtime-remaining").toDouble();
+        const double epsilon = 0.1;
+        nextTimer.start((videoLength - fadeDuration - epsilon) * 1000);
+    }
 }

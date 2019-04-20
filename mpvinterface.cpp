@@ -125,7 +125,7 @@ QVariant MpvInterface::getProperty(const QString &name) const {
 void MpvInterface::load(const QString &filepath) {
     command(QStringList() << "loadfile" << filepath);
     setProperty("image-display-duration", "inf");
-    setProperty("mute", true); // TODO just for debugging
+//    setProperty("mute", true); // TODO just for debugging
 }
 
 void MpvInterface::setPaused(bool value) {
@@ -152,13 +152,11 @@ void MpvInterface::rotate(int angle) {
 void MpvInterface::rotateFromExif() {
     // The cause of the stutter?
     
-    return;
-    
     QElapsedTimer t;
     t.start();
     
-//    const QString filepath = getProperty("path").toString();
-    const QString filepath = "/home/simon/Bilder/mpvslideshowteset/03.JPG";
+    const QString filepath = getProperty("path").toString();
+//    const QString filepath = "/home/simon/Bilder/mpvslideshowteset/03.JPG";
     QFileInfo info(filepath);
     const QString ext = info.suffix().toLower();
     bool validExif = false;

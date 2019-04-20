@@ -99,7 +99,7 @@
         <item>
          <widget class="QPushButton" name="togglePause">
           <property name="text">
-           <string>Pause</string>
+           <string>Start</string>
           </property>
           <property name="checkable">
            <bool>false</bool>
@@ -130,6 +130,13 @@
          </spacer>
         </item>
         <item>
+         <widget class="QLabel" name="label">
+          <property name="text">
+           <string>show images for</string>
+          </property>
+         </widget>
+        </item>
+        <item>
          <widget class="QDoubleSpinBox" name="imageDuration">
           <property name="suffix">
            <string> s</string>
@@ -142,6 +149,29 @@
           </property>
           <property name="value">
            <double>3.000000000000000</double>
+          </property>
+         </widget>
+        </item>
+        <item>
+         <widget class="QLabel" name="label_2">
+          <property name="text">
+           <string>Fade:</string>
+          </property>
+         </widget>
+        </item>
+        <item>
+         <widget class="QDoubleSpinBox" name="fadeDuration">
+          <property name="suffix">
+           <string> s</string>
+          </property>
+          <property name="decimals">
+           <number>1</number>
+          </property>
+          <property name="maximum">
+           <double>9.000000000000000</double>
+          </property>
+          <property name="value">
+           <double>1.000000000000000</double>
           </property>
          </widget>
         </item>

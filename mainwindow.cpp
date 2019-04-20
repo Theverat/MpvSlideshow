@@ -1,8 +1,7 @@
 
 #include "mainwindow.h"
 #include "ui_mainwindow.h"
-#include "mpvwidget.h"
-#include "slideshow.h"
+//#include "slideshow.h"
 #include "sliderstyle.h"
 
 #include <QPushButton>
@@ -21,7 +20,7 @@ MainWindow::MainWindow(QWidget *parent)
     ui->setupUi(this);
     ui->videoSeekBar->setStyle(new MyStyle(ui->videoSeekBar->style()));
     compositor = ui->compositor;
-    slideshow = new Slideshow(ui->compositor, this);
+//    slideshow = new Slideshow(ui->compositor, this);
     
     shortcutOpen = new QShortcut(QKeySequence(tr("Ctrl+O", "Open")), this);
     shortcutPrev = new QShortcut(QKeySequence(tr("Left", "Previous")), this);
@@ -29,20 +28,24 @@ MainWindow::MainWindow(QWidget *parent)
     shortcutTogglePause = new QShortcut(QKeySequence(Qt::Key_Space), this);
     
     connect(shortcutOpen, SIGNAL(activated()), this, SLOT(openDialog()));
-    connect(shortcutPrev, SIGNAL(activated()), slideshow, SLOT(previous()));
-    connect(shortcutNext, SIGNAL(activated()), slideshow, SLOT(next()));
+    connect(shortcutPrev, SIGNAL(activated()), compositor, SLOT(previous()));
+    connect(shortcutNext, SIGNAL(activated()), compositor, SLOT(next()));
     connect(shortcutTogglePause, SIGNAL(activated()), this, SLOT(togglePause()));
     
     connect(ui->open, SIGNAL(released()), this, SLOT(openDialog()));
-    connect(ui->prev, SIGNAL(released()), slideshow, SLOT(previous()));
+    connect(ui->prev, SIGNAL(released()), compositor, SLOT(previous()));
     connect(ui->togglePause, SIGNAL(released()), this, SLOT(togglePause()));
-    connect(ui->next, SIGNAL(released()), slideshow, SLOT(next()));
-    connect(ui->imageDuration, SIGNAL(valueChanged(double)), slideshow, SLOT(setImageDuration(double)));
-    connect(ui->videoSeekBar, SIGNAL(valueChanged(int)), slideshow, SLOT(seek(int)));
+    connect(ui->next, SIGNAL(released()), compositor, SLOT(next()));
+    connect(ui->imageDuration, SIGNAL(valueChanged(double)), compositor, SLOT(setImageDuration(double)));
+    connect(ui->fadeDuration, SIGNAL(valueChanged(double)), compositor, SLOT(setFadeDuration(double)));
+//    connect(ui->videoSeekBar, SIGNAL(valueChanged(int)), slideshow, SLOT(seek(int)));
     
 //    connect(mpv, SIGNAL(positionChanged(int)), this, SLOT(handleVideoPositionChange(int)));
 //    connect(mpv, SIGNAL(durationChanged(int)), this, SLOT(setSliderRange(int)));
 //    connect(mpv, SIGNAL(fileLoaded(QString)), slideshow, SLOT(handleFileLoaded(QString)));
+    
+    compositor->setImageDuration(ui->imageDuration->value());
+    compositor->setFadeDuration(ui->fadeDuration->value());
 }
 
 MainWindow::~MainWindow() {
@@ -53,7 +56,7 @@ MainWindow::~MainWindow() {
 // public slots
 
 void MainWindow::togglePause() {
-    const bool paused = slideshow->togglePause();
+    const bool paused = compositor->togglePause();
     ui->togglePause->setText(paused ? "Resume" : "Pause");
 }
 
@@ -77,8 +80,8 @@ void MainWindow::handleVideoPositionChange(int pos) {
 // Show a directory selection dialog and open the images in the chosen directory
 void MainWindow::openDialog() {
     
-    slideshow->openDir("/home/simon/Bilder/mpvslideshowteset");
-//    slideshow->openDir("/home/simon/Bilder/mpvslideshowteset/marokko");
+//    slideshow->openDir("/home/simon/Bilder/mpvslideshowteset");
+    compositor->openDir("/home/simon/Bilder/mpvslideshowteset/marokko");
     
     return;
     
@@ -93,5 +96,5 @@ void MainWindow::openDialog() {
     
     const QString path = dialog.selectedFiles().at(0);
     qDebug() << "opening Dir:" << path;
-    slideshow->openDir(path);
+    compositor->openDir(path);
 }

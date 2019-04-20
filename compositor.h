@@ -5,6 +5,7 @@
 #include <QOpenGLFunctions>
 #include <QStringList>
 #include <QElapsedTimer>
+#include <QTimer>
 
 #include <vector>
 
@@ -18,8 +19,18 @@ class Compositor Q_DECL_FINAL : public QOpenGLWidget, protected QOpenGLFunctions
 public:
     Compositor(QWidget *parent = 0, Qt::WindowFlags f = 0);
     virtual ~Compositor();
-    void setPaths(const QStringList& paths);
-    void loadNext();
+    void openDir(const QString &path);
+    bool togglePause();
+    
+public slots:
+    void previousFile();
+    void nextFile();
+    void setImageDuration(double seconds) {
+        imageDuration = seconds;
+    }
+    void setFadeDuration(double seconds) {
+        fadeDuration = seconds;
+    }
     
 protected:
     void initializeGL() Q_DECL_OVERRIDE;
@@ -32,6 +43,9 @@ private slots:
 private:
     void drawFullscreenQuad(float alpha);
     void drawFullscreenQuad(float r, float g, float b, float alpha);
+    QStringList getMediaFilesInDir(const QString &dirPath) const;
+    bool isImage(const QString &filepath) const;
+    void startNextTimer();
     
     std::vector<MpvInterface*> mpvInstances;
     std::vector<float> alphas;
@@ -41,10 +55,21 @@ private:
     float *prevAlpha;
     float *currentAlpha;
     float *nextAlpha;
-    QStringList paths;
-    int index = -1;
+    
+    // Slideshow management
+    int index = -1; // Current index
     QElapsedTimer fadeTimer;
-    float fadeDuration = 2.f;
+    QTimer nextTimer;
+    double fadeDuration = 1.0;
+    double imageDuration = 3.0;
+    QString currentDirPath;
+    QString currentFilePath;
+    QStringList paths;
+    bool paused = true;
+    QStringList imageFormats;
+    QStringList videoFormats;
+    QStringList mediaNameFilter;
+    
     // for debugging the stutter
     QElapsedTimer betweenPaints;
 };
