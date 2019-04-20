@@ -21,6 +21,7 @@ public:
     
 public slots:
     void togglePause();
+    void setSeekBarVisible(bool value);
     
 protected:
     void closeEvent(QCloseEvent *event);
@@ -32,7 +33,7 @@ private slots:
     
 protected:
     void mouseMoveEvent(QMouseEvent *event);
-    void showEvent(QShowEvent *event);
+    void showEvent(QShowEvent *);
     
 private:
     void writeSettings();

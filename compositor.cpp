@@ -48,11 +48,8 @@ void Compositor::reset() {
 }
 
 Compositor::~Compositor() {
-    qDebug() << "~Compositor()";
     for (MpvInterface *mpv : mpvInstances) {
-        qDebug() << "making current";
         makeCurrent();
-        qDebug() << "deleting mpv";
         delete mpv;
     }
     mpvInstances.clear();
@@ -121,9 +118,11 @@ void Compositor::previousFile() {
     *currentAlpha = 1.f;
     *nextAlpha = 0.f;
     
+    mainwindow->setSeekBarVisible(!isImage(paths.at(index)));
     disconnect(prev, 0, 0, 0);
     disconnect(next, 0, 0, 0);
     connect(current, SIGNAL(positionChanged(int)), mainwindow, SLOT(handleVideoPositionChange(int)));
+    connect(current, SIGNAL(durationChanged(int)), mainwindow, SLOT(setSliderRange(int)));
     
     current->setPaused(false);
     if (index - 1 >= 0) {
@@ -131,8 +130,7 @@ void Compositor::previousFile() {
         prev->setPaused(true);
     }
     
-    fadeBackwards = true;
-    fadeTimer.start();
+    startFade(true);
     if (!paused) {
         startNextTimer();
     }
@@ -162,6 +160,7 @@ void Compositor::nextFile() {
     *currentAlpha = 1.f;
     *nextAlpha = 0.f;
     
+    mainwindow->setSeekBarVisible(!isImage(paths.at(index)));
     disconnect(prev, 0, 0, 0);
     disconnect(next, 0, 0, 0);
     connect(current, SIGNAL(positionChanged(int)), mainwindow, SLOT(handleVideoPositionChange(int)));
@@ -185,8 +184,7 @@ void Compositor::nextFile() {
         prev->setPaused(true);
     }
     
-    fadeBackwards = false;
-    fadeTimer.start();
+    startFade(false);
     if (!paused)
         startNextTimer();
 }
@@ -207,10 +205,10 @@ void Compositor::initializeGL() {
 }
 
 void Compositor::paintGL() {    
-    const int msSinceLast = betweenPaints.isValid() ? betweenPaints.elapsed() : 0;
+//    const int msSinceLast = betweenPaints.isValid() ? betweenPaints.elapsed() : 0;
     
-    QElapsedTimer t;
-    t.start();
+//    QElapsedTimer t;
+//    t.start();
     
     const float elapsed = fadeTimer.isValid() ? fadeTimer.elapsed() / 1000.f : 0.f;
     float elapsedNormalized = clamp(elapsed / getFadeDuration());
@@ -224,11 +222,13 @@ void Compositor::paintGL() {
     }
     *currentAlpha = elapsedNormalized;
     
-    if (elapsed >= getFadeDuration()) {
+    if (!fadeEndHandled && elapsed >= getFadeDuration()) {
         // We are done fading
-        // TODO maybe move to own method
         prev->setPaused(true);
+        prev->command_async(QVariantList() << "seek" << 0 << "absolute");
         next->setPaused(true);
+        next->command_async(QVariantList() << "seek" << 0 << "absolute");
+        fadeEndHandled = true;
     }
     
     for (int i = 0; i < 3; ++i) {
@@ -268,7 +268,7 @@ void Compositor::paintGL() {
     }
     
 //    qDebug() << "paint" << t.elapsed() << "ms, since last:" << msSinceLast << "ms, elapsedNorm:" << elapsedNormalized;
-    betweenPaints.start();
+//    betweenPaints.start();
     
 //    Q_ASSERT(msSinceLast < 100);
 }
@@ -376,4 +376,10 @@ void Compositor::startNextTimer() {
         const double epsilon = 0.1;
         nextTimer.start((videoLength - getFadeDuration() - epsilon) * 1000);
     }
+}
+
+void Compositor::startFade(bool backwards) {
+    fadeBackwards = backwards;
+    fadeTimer.start();
+    fadeEndHandled = false;
 }

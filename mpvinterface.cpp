@@ -129,8 +129,8 @@ void MpvInterface::load(const QString &filepath) {
 }
 
 void MpvInterface::setPaused(bool value) {
-    if (getProperty("pause").toBool() != value)
-        setProperty("pause", value);
+//    if (getProperty("pause").toBool() != value)
+    setPropertyAsync("pause", value);
 }
 
 bool MpvInterface::isPaused() const {

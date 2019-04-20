@@ -33,6 +33,7 @@ public:
         return index;
     }
     bool togglePause();
+    bool isImage(const QString &filepath) const;
     
 public slots:
     void previousFile();
@@ -56,7 +57,6 @@ private:
     void drawFullscreenQuad(float alpha);
     void drawFullscreenQuad(float r, float g, float b, float alpha);
     QStringList getMediaFilesInDir(const QString &dirPath) const;
-    bool isImage(const QString &filepath) const;
     void startNextTimer();
     static float clamp(float value, float min=0.f, float max=1.f) {
         return std::max(min, std::min(max, value));
@@ -64,6 +64,7 @@ private:
     double getFadeDuration() const {
         return clamp(fadeDuration, 0.f, imageDuration);
     }
+    void startFade(bool backwards);
     
     MainWindow *mainwindow;
     std::vector<MpvInterface*> mpvInstances;
@@ -82,6 +83,7 @@ private:
     QTimer nextTimer;
     double fadeDuration = 1.0;
     bool fadeBackwards = false;
+    bool fadeEndHandled = false;
     double imageDuration = 3.0;
     QString currentDirPath;
     QStringList paths;

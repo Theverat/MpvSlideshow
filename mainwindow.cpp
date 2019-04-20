@@ -67,6 +67,10 @@ void MainWindow::togglePause() {
         ui->bottomControls->hide();
 }
 
+void MainWindow::setSeekBarVisible(bool value) {
+    ui->videoSeekBar->setVisible(value);
+}
+
 //------------------------------------------------------------------
 // protected
 
@@ -126,7 +130,7 @@ void MainWindow::mouseMoveEvent(QMouseEvent *event) {
     }
 }
 
-void MainWindow::showEvent(QShowEvent *event) {
+void MainWindow::showEvent(QShowEvent *) {
     readSettings();
 }
 
