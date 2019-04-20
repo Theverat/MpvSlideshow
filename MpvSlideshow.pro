@@ -10,14 +10,12 @@ HEADERS = \
     sliderstyle.h \
     exifparser.h \
     compositor.h \
-    mpvinterface.h \
-    filebuffer.h
+    mpvinterface.h
 SOURCES = main.cpp \
     mainwindow.cpp \
     exifparser.cpp \
     compositor.cpp \
-    mpvinterface.cpp \
-    filebuffer.cpp
+    mpvinterface.cpp
 
 FORMS += \
     mainwindow.ui
