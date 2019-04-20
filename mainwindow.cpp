@@ -1,7 +1,6 @@
 
 #include "mainwindow.h"
 #include "ui_mainwindow.h"
-//#include "slideshow.h"
 #include "sliderstyle.h"
 
 #include <QPushButton>
@@ -20,7 +19,6 @@ MainWindow::MainWindow(QWidget *parent)
     ui->setupUi(this);
     ui->videoSeekBar->setStyle(new MyStyle(ui->videoSeekBar->style()));
     compositor = ui->compositor;
-//    slideshow = new Slideshow(ui->compositor, this);
     
     shortcutOpen = new QShortcut(QKeySequence(tr("Ctrl+O", "Open")), this);
     shortcutPrev = new QShortcut(QKeySequence(tr("Left", "Previous")), this);
@@ -57,7 +55,7 @@ MainWindow::~MainWindow() {
 
 void MainWindow::togglePause() {
     const bool paused = compositor->togglePause();
-    ui->togglePause->setText(paused ? "Resume" : "Pause");
+    ui->togglePause->setText(paused ? tr("Resume") : tr("Pause"));
 }
 
 //------------------------------------------------------------------
