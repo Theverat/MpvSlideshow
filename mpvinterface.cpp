@@ -10,7 +10,6 @@
 
 
 static void wakeup(void *ctx) {
-    qDebug() << "wakeup";
     // TODO the cause of the stutter?
     QMetaObject::invokeMethod((MpvInterface*)ctx, "on_mpv_events", Qt::QueuedConnection);
 }
@@ -54,7 +53,7 @@ MpvInterface::MpvInterface(QObject *parent)
     mpv_observe_property(mpv, 0, "duration", MPV_FORMAT_DOUBLE);
     mpv_observe_property(mpv, 0, "time-pos", MPV_FORMAT_DOUBLE);
     // TODO the cause of the stutter?
-//    mpv_set_wakeup_callback(mpv, wakeup, this);
+    mpv_set_wakeup_callback(mpv, wakeup, this);
 }
 
 MpvInterface::~MpvInterface() {
@@ -124,7 +123,7 @@ QVariant MpvInterface::getProperty(const QString &name) const {
 void MpvInterface::load(const QString &filepath) {
     command(QStringList() << "loadfile" << filepath);
     setProperty("image-display-duration", "inf");
-//    setProperty("mute", true); // TODO just for debugging
+    setProperty("mute", true); // TODO just for debugging
 }
 
 void MpvInterface::setPaused(bool value) {
@@ -151,6 +150,7 @@ void MpvInterface::rotate(int angle) {
 
 void MpvInterface::rotateFromExif() {
     // The cause of the stutter?
+    return;
     
     QElapsedTimer t;
     t.start();
@@ -242,36 +242,37 @@ void MpvInterface::handle_mpv_event(mpv_event *event) {
     
     switch (event->event_id) {
     case MPV_EVENT_PROPERTY_CHANGE: {
-        qDebug() << "MPV_EVENT_PROPERTY_CHANGE";
-        mpv_event_property *prop = (mpv_event_property *)event->data;
-        const QString propName(prop->name);
+//        mpv_event_property *prop = (mpv_event_property *)event->data;
+//        const QString propName(prop->name);
         
-        if (propName == "time-pos") {
-            if (prop->format == MPV_FORMAT_DOUBLE) {
-                double time = *(double *)prop->data;
-                emit positionChanged(time);
-            }
-        } else if (propName == "duration") {
-            if (prop->format == MPV_FORMAT_DOUBLE) {
-                double time = *(double *)prop->data;
-                emit durationChanged(time);
-            }
-        }
+//        if (propName == "time-pos") {
+//            if (prop->format == MPV_FORMAT_DOUBLE) {
+//                double time = *(double *)prop->data;
+//                emit positionChanged(time);
+//            }
+//        } else if (propName == "duration") {
+//            if (prop->format == MPV_FORMAT_DOUBLE) {
+//                double time = *(double *)prop->data;
+//                emit durationChanged(time);
+//            }
+//        }
         break;
     }
     case MPV_EVENT_START_FILE: {
         qDebug() << "MPV_EVENT_START_FILE";
-        rotateFromExif();
+//        rotateFromExif();
         break;
     }
     case MPV_EVENT_FILE_LOADED: {
-        
+        qDebug() << "MPV_EVENT_FILE_LOADED";
+        rotateFromExif();
+        break;
     }
     default: ;
         // Ignore uninteresting or unknown events.
     }
     
-    qDebug() << "handle_mpv_event:" << t.elapsed() << "ms";
+//    qDebug() << "handle_mpv_event:" << t.elapsed() << "ms";
 }
 
 void MpvInterface::on_update(void *ctx) {

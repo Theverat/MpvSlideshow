@@ -85,6 +85,7 @@ bool Compositor::togglePause() {
     } else {
         startNextTimer();
     }
+    current->setPaused(paused);
     return paused;
 }
 
@@ -92,6 +93,8 @@ bool Compositor::togglePause() {
 // public slots
 
 void Compositor::previousFile() {
+    Q_ASSERT(!firstLoad);
+    
     const int newIndex = index - 1;
     if (newIndex < 0) {
         qDebug() << "Can not load previous: index out of range:" << newIndex;
@@ -152,22 +155,27 @@ void Compositor::nextFile() {
     *nextAlpha = 0.f;
     
     if (firstLoad) {
-        qDebug() << "loading first in list";
         current->load(paths.at(index));
-    } 
-    current->setPaused(false);
+        current->setPaused(true);
+    } else {
+        current->setPaused(false);
+    }
     
     // Already buffer the next image, if possible
     if (index + 1 < paths.size()) {
         next->load(paths.at(index + 1));
         next->setPaused(true);
     }
+    if (firstLoad && index - 1 >= 0) {
+        // In case we load an image at index != 0, fill the prev buffer
+        prev->load(paths.at(index - 1));
+        prev->setPaused(true);
+    }
     
     fadeBackwards = false;
     fadeTimer.start();
-    if (!paused) {
+    if (!paused)
         startNextTimer();
-    }
 }
 
 //------------------------------------------------------------------
