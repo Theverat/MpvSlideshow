@@ -18,8 +18,15 @@ class Compositor Q_DECL_FINAL : public QOpenGLWidget, protected QOpenGLFunctions
     
 public:
     Compositor(QWidget *parent = 0, Qt::WindowFlags f = 0);
+    void reset();
     virtual ~Compositor();
-    void openDir(const QString &path);
+    void openDir(const QString &path, int index=0);
+    QString getCurrentDirPath() const {
+        return currentDirPath;
+    }
+    int getCurrentIndex() const {
+        return index;
+    }
     bool togglePause();
     
 public slots:
@@ -49,6 +56,9 @@ private:
     static float clamp(float value, float min=0.f, float max=1.f) {
         return std::max(min, std::min(max, value));
     }
+    double getFadeDuration() const {
+        return clamp(fadeDuration, 0.f, imageDuration);
+    }
     
     std::vector<MpvInterface*> mpvInstances;
     std::vector<float> alphas;
@@ -61,13 +71,13 @@ private:
     
     // Slideshow management
     int index = -1; // Current index
+    bool firstLoad = true;
     QElapsedTimer fadeTimer;
     QTimer nextTimer;
     double fadeDuration = 1.0;
     bool fadeBackwards = false;
     double imageDuration = 3.0;
     QString currentDirPath;
-    QString currentFilePath;
     QStringList paths;
     bool paused = true;
     QStringList imageFormats;

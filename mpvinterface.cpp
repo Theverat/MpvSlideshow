@@ -16,7 +16,6 @@ static void wakeup(void *ctx) {
 }
 
 static void *get_proc_address(void *ctx, const char *name) {
-    qDebug() << "get_proc_address";
     Q_UNUSED(ctx);
     QOpenGLContext *glctx = QOpenGLContext::currentContext();
     if (!glctx)
@@ -129,7 +128,8 @@ void MpvInterface::load(const QString &filepath) {
 }
 
 void MpvInterface::setPaused(bool value) {
-    setProperty("pause", value);
+    if (getProperty("pause").toBool() != value)
+        setProperty("pause", value);
 }
 
 bool MpvInterface::isPaused() const {

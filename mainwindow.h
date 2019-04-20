@@ -22,6 +22,9 @@ public:
 public slots:
     void togglePause();
     
+protected:
+    void closeEvent(QCloseEvent *event);
+    
 private slots:
     void setSliderRange(int duration);
     void handleVideoPositionChange(int pos);
@@ -29,8 +32,12 @@ private slots:
     
 protected:
     void mouseMoveEvent(QMouseEvent *event);
+    void showEvent(QShowEvent *event);
     
 private:
+    void writeSettings();
+    void readSettings();
+    
     Ui::MainWindow *ui;
     Compositor *compositor;
     

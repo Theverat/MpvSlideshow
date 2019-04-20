@@ -1,7 +1,6 @@
 #include "compositor.h"
 #include "mpvinterface.h"
 
-//#include <QMetaObject>
 #include <QDebug>
 #include <QtGlobal> // Q_ASSERT
 #include <QDir>
@@ -23,6 +22,8 @@ Compositor::Compositor(QWidget *parent, Qt::WindowFlags f)
     currentAlpha = &alphas[1];
     nextAlpha = &alphas[2];
     
+    reset();
+    
     // Slideshow management
     nextTimer.setSingleShot(true);
     connect(&nextTimer, SIGNAL(timeout()), this, SLOT(nextFile()));
@@ -36,25 +37,42 @@ Compositor::Compositor(QWidget *parent, Qt::WindowFlags f)
     }
 }
 
+void Compositor::reset() {
+    paused = true;
+    fadeBackwards = false;
+    nextTimer.stop();
+    currentDirPath.clear();
+    index = -1;
+    firstLoad = true;
+}
+
 Compositor::~Compositor() {
     for (MpvInterface *mpv : mpvInstances) {
         makeCurrent();
         delete mpv;
+        mpv = nullptr;
     }
 }
 
-void Compositor::openDir(const QString &path) {
+void Compositor::openDir(const QString &path, int index) {
     Q_ASSERT(path.size());
+    
+    reset();
     
     QStringList files = getMediaFilesInDir(path);
     if (files.empty())
-        // TODO go back to same state as after startup
         return;
     
     currentDirPath = path;
     paths = files;
     
+    if (index >= 0 && index < files.size())
+        this->index = index - 1;
+    else
+        this->index = -1;
+    
     nextFile();
+    firstLoad = false;
 }
 
 bool Compositor::togglePause() {
@@ -96,6 +114,7 @@ void Compositor::previousFile() {
     *currentAlpha = 1.f;
     *nextAlpha = 0.f;
     
+    current->setPaused(false);
     if (index - 1 >= 0) {
         prev->load(paths.at(index - 1));
         prev->setPaused(true);
@@ -132,12 +151,11 @@ void Compositor::nextFile() {
     *currentAlpha = 1.f;
     *nextAlpha = 0.f;
     
-    if (index == 0) {
+    if (firstLoad) {
         qDebug() << "loading first in list";
         current->load(paths.at(index));
-    } else {
-        current->setPaused(false);
-    }
+    } 
+    current->setPaused(false);
     
     // Already buffer the next image, if possible
     if (index + 1 < paths.size()) {
@@ -174,7 +192,7 @@ void Compositor::paintGL() {
     t.start();
     
     const float elapsed = fadeTimer.isValid() ? fadeTimer.elapsed() / 1000.f : 0.f;
-    float elapsedNormalized = clamp(elapsed / fadeDuration);
+    float elapsedNormalized = clamp(elapsed / getFadeDuration());
     
     if (fadeBackwards) {
         *prevAlpha = 0.f;
@@ -185,15 +203,11 @@ void Compositor::paintGL() {
     }
     *currentAlpha = elapsedNormalized;
     
-    if (elapsed >= fadeDuration) {
+    if (elapsed >= getFadeDuration()) {
         // We are done fading
         // TODO maybe move to own method
-        if (!prev->isPaused()) {
-            prev->setPaused(true);
-        }
-        if (!next->isPaused()) {
-            next->setPaused(true);
-        }
+        prev->setPaused(true);
+        next->setPaused(true);
     }
     
     for (int i = 0; i < 3; ++i) {
@@ -232,10 +246,10 @@ void Compositor::paintGL() {
         }
     }
     
-    qDebug() << "paint" << t.elapsed() << "ms, since last:" << msSinceLast << "ms, elapsedNorm:" << elapsedNormalized;
+//    qDebug() << "paint" << t.elapsed() << "ms, since last:" << msSinceLast << "ms, elapsedNorm:" << elapsedNormalized;
     betweenPaints.start();
     
-    Q_ASSERT(msSinceLast < 100);
+//    Q_ASSERT(msSinceLast < 100);
 }
 
 //------------------------------------------------------------------
@@ -339,6 +353,6 @@ void Compositor::startNextTimer() {
     } else {
         const double videoLength = current->getProperty("playtime-remaining").toDouble();
         const double epsilon = 0.1;
-        nextTimer.start((videoLength - fadeDuration - epsilon) * 1000);
+        nextTimer.start((videoLength - getFadeDuration() - epsilon) * 1000);
     }
 }

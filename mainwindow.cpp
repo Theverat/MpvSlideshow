@@ -9,6 +9,7 @@
 #include <QFileDialog>
 #include <QShortcut>
 #include <QMouseEvent>
+#include <QSettings>
 
 #include <QDebug>
 
@@ -52,6 +53,7 @@ MainWindow::MainWindow(QWidget *parent)
 
 MainWindow::~MainWindow() {
     delete ui;
+    qDebug() << "ui deleted";
 }
 
 //------------------------------------------------------------------
@@ -60,6 +62,15 @@ MainWindow::~MainWindow() {
 void MainWindow::togglePause() {
     const bool paused = compositor->togglePause();
     ui->togglePause->setText(paused ? tr("Resume") : tr("Pause"));
+}
+
+//------------------------------------------------------------------
+// protected
+
+void MainWindow::closeEvent(QCloseEvent *event) {
+    writeSettings();
+    qDebug() << "wrote settings";
+    event->accept();
 }
 
 //------------------------------------------------------------------
@@ -83,13 +94,14 @@ void MainWindow::handleVideoPositionChange(int pos) {
 void MainWindow::openDialog() {
     
 //    slideshow->openDir("/home/simon/Bilder/mpvslideshowteset");
-    compositor->openDir("/home/simon/Bilder/mpvslideshowteset/marokko");
+//    compositor->openDir("/home/simon/Bilder/mpvslideshowteset/marokko");
     
-    return;
+//    return;
     
     QFileDialog dialog(this);
     dialog.setFileMode(QFileDialog::Directory);
-    dialog.setDirectory(QDir::homePath());
+    const QString currentDir = compositor->getCurrentDirPath();
+    dialog.setDirectory(currentDir.size() ? currentDir : QDir::homePath());
     
     const bool ok = dialog.exec();
     if(!ok) {
@@ -105,4 +117,51 @@ void MainWindow::mouseMoveEvent(QMouseEvent *event) {
     if (ui->bottomControls->geometry().contains(event->pos())) {
         ui->bottomControls->show();
     }
+}
+
+void MainWindow::showEvent(QShowEvent *event) {
+    readSettings();
+}
+
+void MainWindow::writeSettings() {
+    QSettings qsettings( "simon", "mpvslideshow" );
+
+    qsettings.beginGroup( "mainwindow" );
+
+    qsettings.setValue( "geometry", saveGeometry() );
+    qsettings.setValue( "savestate", saveState() );
+    qsettings.setValue( "maximized", isMaximized() );
+
+    if ( !isMaximized() ) {
+        qsettings.setValue( "pos", pos() );
+        qsettings.setValue( "size", size() );
+    }
+    
+    qsettings.setValue("lastDir", compositor->getCurrentDirPath());
+    qsettings.setValue("lastIndex", compositor->getCurrentIndex());
+
+    qsettings.endGroup();
+}
+
+void MainWindow::readSettings() {
+    QSettings qsettings( "simon", "mpvslideshow" );
+
+    qsettings.beginGroup( "mainwindow" );
+
+    restoreGeometry(qsettings.value( "geometry", saveGeometry() ).toByteArray());
+    restoreState(qsettings.value( "savestate", saveState() ).toByteArray());
+    move(qsettings.value( "pos", pos() ).toPoint());
+    resize(qsettings.value( "size", size() ).toSize());
+
+    if ( qsettings.value( "maximized", isMaximized() ).toBool() )
+        showMaximized();
+
+    const QString lastDir = qsettings.value("lastDir").toString();
+    const int lastIndex = qsettings.value("lastIndex").toInt();
+    if (lastDir.size() > 0) {
+        qDebug() << "Restoring session:" << lastDir << "index:" << lastIndex;
+        compositor->openDir(lastDir, lastIndex);
+    }
+
+    qsettings.endGroup();
 }
