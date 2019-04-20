@@ -10,12 +10,14 @@ HEADERS = \
     sliderstyle.h \
     exifparser.h \
     compositor.h \
-    mpvinterface.h
+    mpvinterface.h \
+    autohidewidget.h
 SOURCES = main.cpp \
     mainwindow.cpp \
     exifparser.cpp \
     compositor.cpp \
-    mpvinterface.cpp
+    mpvinterface.cpp \
+    autohidewidget.cpp
 
 FORMS += \
     mainwindow.ui

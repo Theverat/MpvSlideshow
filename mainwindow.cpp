@@ -8,6 +8,7 @@
 #include <QLayout>
 #include <QFileDialog>
 #include <QShortcut>
+#include <QMouseEvent>
 
 #include <QDebug>
 
@@ -19,6 +20,9 @@ MainWindow::MainWindow(QWidget *parent)
     ui->setupUi(this);
     ui->videoSeekBar->setStyle(new MyStyle(ui->videoSeekBar->style()));
     compositor = ui->compositor;
+    setMouseTracking(true);
+    ui->centralwidget->setMouseTracking(true);
+    ui->compositor->setMouseTracking(true);
     
     shortcutOpen = new QShortcut(QKeySequence(tr("Ctrl+O", "Open")), this);
     shortcutPrev = new QShortcut(QKeySequence(tr("Left", "Previous")), this);
@@ -95,4 +99,10 @@ void MainWindow::openDialog() {
     const QString path = dialog.selectedFiles().at(0);
     qDebug() << "opening Dir:" << path;
     compositor->openDir(path);
+}
+
+void MainWindow::mouseMoveEvent(QMouseEvent *event) {
+    if (ui->bottomControls->geometry().contains(event->pos())) {
+        ui->bottomControls->show();
+    }
 }

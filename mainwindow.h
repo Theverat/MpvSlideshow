@@ -2,6 +2,7 @@
 #define MainWindow_H
 
 #include <QMainWindow>
+#include <QTimer>
 
 class Compositor;
 class QShortcut;
@@ -25,6 +26,9 @@ private slots:
     void setSliderRange(int duration);
     void handleVideoPositionChange(int pos);
     void openDialog();
+    
+protected:
+    void mouseMoveEvent(QMouseEvent *event);
     
 private:
     Ui::MainWindow *ui;
