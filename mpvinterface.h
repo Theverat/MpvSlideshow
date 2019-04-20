@@ -24,12 +24,15 @@ public:
     void command(const QVariant& params);
     void command_async(const QVariant& params);
     void setProperty(const QString& name, const QVariant& value);
+    void setPropertyAsync(const QString& name, const QVariant& value);
     QVariant getProperty(const QString& name) const;
     
     void load(const QString &filepath);
     void setPaused(bool value);
     bool isPaused() const;
     void stop();
+    void rotate(int angle);
+    void rotateFromExif();
     
 signals:
     void positionChanged(int value);
@@ -47,8 +50,6 @@ private:
     mpv::qt::Handle mpv;
     mpv_opengl_cb_context *mpv_gl;
     QOpenGLFramebufferObject *fbo;
-    
-    QElapsedTimer loadTimer;
 };
 
 #endif // MPVINTERFACE_H

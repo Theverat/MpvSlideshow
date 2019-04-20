@@ -84,13 +84,14 @@ void Compositor::initializeGL() {
     
     for (MpvInterface *mpv : mpvInstances) {
         mpv->initializeGL();
-        connect(mpv, SIGNAL(updateSignal()), this, SLOT(maybeUpdate()));
+        // TODO is this needed?
+        //connect(mpv, SIGNAL(updateSignal()), this, SLOT(maybeUpdate()));
     }
     
     connect(this, SIGNAL(frameSwapped()), this, SLOT(swapped()));
 }
 
-void Compositor::paintGL() {
+void Compositor::paintGL() {    
     const int msSinceLast = betweenPaints.isValid() ? betweenPaints.elapsed() : 0;
     
     QElapsedTimer t;
@@ -107,6 +108,7 @@ void Compositor::paintGL() {
         if (!prev->isPaused()) {
             prev->setPaused(true);
         }
+//        next->rotateFromExif();
     }
     
     for (int i = 0; i < 3; ++i) {
@@ -143,8 +145,7 @@ void Compositor::paintGL() {
         }
     }
     
-//    if (t.elapsed() > 41 || msSinceLast > 30)
-        qDebug() << "paint" << t.elapsed() << "ms, since last:" << msSinceLast << "ms, elapsedNorm:" << elapsedNormalized << "core-idle:" << current->getProperty("core-idle").toBool();
+    qDebug() << "paint" << t.elapsed() << "ms, since last:" << msSinceLast << "ms, elapsedNorm:" << elapsedNormalized;
     betweenPaints.start();
     
     Q_ASSERT(msSinceLast < 100);
