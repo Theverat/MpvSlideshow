@@ -108,7 +108,7 @@ void Compositor::previousFile() {
     disconnect(prev, 0, 0, 0);
     disconnect(next, 0, 0, 0);
     connect(current, SIGNAL(positionChanged(int)), mainwindow, SLOT(handleVideoPositionChange(int)));
-//    connect(current, SIGNAL(durationChanged(int)), mainwindow, SLOT(setSliderRange(int)));
+    // The durationChanged signal was already emitted at this point
     mainwindow->setSliderRange(current->getProperty("duration").toInt());
     
     // Videos begin to play even when slideshow is paused (I consider this 
@@ -130,7 +130,7 @@ void Compositor::nextFile() {
     qDebug() << "nextFile";
     const int newIndex = index + 1;
     if (newIndex >= paths.size()) {
-        qDebug() << "Can not load next: index out of range:" << newIndex;
+        qDebug() << "Can not load next: index out of range:" << newIndex << "filecount:" << paths.size();
         return;
     }
     index = newIndex;
@@ -145,8 +145,8 @@ void Compositor::nextFile() {
     disconnect(prev, 0, 0, 0);
     disconnect(next, 0, 0, 0);
     connect(current, SIGNAL(positionChanged(int)), mainwindow, SLOT(handleVideoPositionChange(int)));
-//    connect(current, SIGNAL(durationChanged(int)), mainwindow, SLOT(setSliderRange(int)));
-    mainwindow->setSliderRange(current->getProperty("duration").toInt());
+    // The durationChanged signal was already emitted at this point
+    mainwindow->setSliderRange(current->getProperty("duration").toInt()); 
     
     if (firstLoad) {
         current->load(paths.at(index));
@@ -188,12 +188,7 @@ void Compositor::initializeGL() {
     connect(this, SIGNAL(frameSwapped()), this, SLOT(swapped()));
 }
 
-void Compositor::paintGL() {    
-//    const int msSinceLast = betweenPaints.isValid() ? betweenPaints.elapsed() : 0;
-    
-//    QElapsedTimer t;
-//    t.start();
-    
+void Compositor::paintGL() {
     const float elapsed = fadeTimer.isValid() ? (fadeTimer.elapsed() / 1000.f) : 0.f;
     const float clampedFadeDuration = getFadeDuration();
     const float elapsedNormalized = clampedFadeDuration ? clamp(elapsed / clampedFadeDuration) : 1.f;
@@ -227,11 +222,6 @@ void Compositor::paintGL() {
         next->command_async(QVariantList() << "seek" << 0 << "absolute");
         fadeEndHandled = true;
     }
-    
-//    qDebug() << "paint" << t.elapsed() << "ms, since last:" << msSinceLast << "ms, elapsedNorm:" << elapsedNormalized;
-//    betweenPaints.start();
-    
-//    Q_ASSERT(msSinceLast < 100);
 }
 
 void Compositor::drawMpvInstance(MpvInterface *mpv, float alpha, int volume) {

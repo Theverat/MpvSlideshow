@@ -17,13 +17,12 @@ I successfully compiled on Linux and Windows.
 ## Todo
 
 * [x] Fix bug where images are skipped after videos
-* [ ] Add audio fade in/out for videos
-* [ ] Fade to black on image/video end, then fade in from black for the next image/video
-* [ ] Instead of fade to black: fade from current to next image
-* [ ] Hide video seek bar when no video is displayed
-* [ ] Hide controls and cursor when mouse cursor is not moved for a while
+* [x] Add audio fade in/out for videos
+* [x] Instead of fade to black: fade from current to next image
+* [x] Hide video seek bar when no video is displayed
+* [x] Hide controls and cursor when mouse cursor is outside the controls
 * [x] Add keyboard shortcuts
 * [ ] Add help dialog
 * [x] Rotate images according to their EXIF data
 * [x] Do not throw away the playlist when it ends
-* [ ] Load next file in background and blend to it when user/timer triggers "next"?
+* [x] Load next file in background and blend to it when user/timer triggers "next"

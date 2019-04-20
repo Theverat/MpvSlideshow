@@ -55,15 +55,12 @@ MpvInterface::MpvInterface(QObject *parent)
 }
 
 MpvInterface::~MpvInterface() {
-    qDebug() << "~MpvInterface()";
     if (mpv_gl)
         mpv_opengl_cb_set_update_callback(mpv_gl, NULL, NULL);
-    qDebug() << "~MpvInterface() 2";
     // Until this call is done, we need to make sure the player remains
     // alive. This is done implicitly with the mpv::qt::Handle instance
     // in this class.
     mpv_opengl_cb_uninit_gl(mpv_gl);
-    qDebug() << "~MpvInterface() Done";
 }
 
 void MpvInterface::initializeGL() {
@@ -76,7 +73,6 @@ void MpvInterface::initializeGL() {
 
 void MpvInterface::paintGL(int width, int height) {
     if (fbo->width() != width || fbo->height() != height) {
-        qDebug() << "resizing fbo";
         delete fbo;
         fbo = new QOpenGLFramebufferObject(width, height);
     }
@@ -146,26 +142,20 @@ void MpvInterface::rotate(int angle) {
 }
 
 void MpvInterface::rotateFromExif() {
-    QElapsedTimer t;
-    t.start();
+    // Every communication with mpv in this method has to be async!
+    // Otherwise stutter happens.
     
     QFileInfo info(currentFilePath);
     const QString ext = info.suffix().toLower();
     bool validExif = false;
-    qDebug() << "getting fileInfo:" << t.elapsed() << "path:" << currentFilePath;
-    t.start();
     
     if(ext == "jpg" || ext == "jpeg" || ext == "png" || ext == "tif" || ext == "tiff") {
         ExifParser exif(currentFilePath);
-        qDebug() << "Building EXIF parser:" << t.elapsed();
-        t.start();
         
         // TODO implement the mirror/transpose cases
         if(exif.isValid()) {
-            qDebug() << "exif.isValid():" << t.elapsed();
-            t.start();
-            
             validExif = true;
+            
             switch(exif.getOrientation()) {
             case 1:
                 rotate(0);
@@ -199,7 +189,6 @@ void MpvInterface::rotateFromExif() {
         // No EXIF information, reset rotation
         rotate(0);
     }
-    qDebug() << "rotating:" << t.elapsed();
 }
 
 //------------------------------------------------------------------
@@ -243,12 +232,10 @@ void MpvInterface::handle_mpv_event(mpv_event *event) {
         break;
     }
     case MPV_EVENT_START_FILE: {
-        qDebug() << "MPV_EVENT_START_FILE";
         rotateFromExif();
         break;
     }
     case MPV_EVENT_FILE_LOADED: {
-        qDebug() << "MPV_EVENT_FILE_LOADED";
         break;
     }
     default: ;
