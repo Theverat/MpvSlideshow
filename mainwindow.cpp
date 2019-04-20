@@ -26,14 +26,14 @@ MainWindow::MainWindow(QWidget *parent)
     shortcutTogglePause = new QShortcut(QKeySequence(Qt::Key_Space), this);
     
     connect(shortcutOpen, SIGNAL(activated()), this, SLOT(openDialog()));
-    connect(shortcutPrev, SIGNAL(activated()), compositor, SLOT(previous()));
-    connect(shortcutNext, SIGNAL(activated()), compositor, SLOT(next()));
+    connect(shortcutPrev, SIGNAL(activated()), compositor, SLOT(previousFile()));
+    connect(shortcutNext, SIGNAL(activated()), compositor, SLOT(nextFile()));
     connect(shortcutTogglePause, SIGNAL(activated()), this, SLOT(togglePause()));
     
     connect(ui->open, SIGNAL(released()), this, SLOT(openDialog()));
-    connect(ui->prev, SIGNAL(released()), compositor, SLOT(previous()));
+    connect(ui->prev, SIGNAL(released()), compositor, SLOT(previousFile()));
     connect(ui->togglePause, SIGNAL(released()), this, SLOT(togglePause()));
-    connect(ui->next, SIGNAL(released()), compositor, SLOT(next()));
+    connect(ui->next, SIGNAL(released()), compositor, SLOT(nextFile()));
     connect(ui->imageDuration, SIGNAL(valueChanged(double)), compositor, SLOT(setImageDuration(double)));
     connect(ui->fadeDuration, SIGNAL(valueChanged(double)), compositor, SLOT(setFadeDuration(double)));
 //    connect(ui->videoSeekBar, SIGNAL(valueChanged(int)), slideshow, SLOT(seek(int)));

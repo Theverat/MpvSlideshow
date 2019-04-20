@@ -4,7 +4,6 @@
 #include <QMainWindow>
 
 class Compositor;
-//class Slideshow;
 class QShortcut;
 
 namespace Ui {
@@ -30,7 +29,6 @@ private slots:
 private:
     Ui::MainWindow *ui;
     Compositor *compositor;
-//    Slideshow *slideshow;
     
     QShortcut *shortcutOpen;
     QShortcut *shortcutPrev;

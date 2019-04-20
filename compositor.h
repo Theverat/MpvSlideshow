@@ -46,6 +46,9 @@ private:
     QStringList getMediaFilesInDir(const QString &dirPath) const;
     bool isImage(const QString &filepath) const;
     void startNextTimer();
+    static float clamp(float value, float min=0.f, float max=1.f) {
+        return std::max(min, std::min(max, value));
+    }
     
     std::vector<MpvInterface*> mpvInstances;
     std::vector<float> alphas;

@@ -80,7 +80,7 @@ void Compositor::previousFile() {
 void Compositor::nextFile() {
     qDebug() << "nextFile";
     const int newIndex = index + 1;
-    if (index >= paths.size()) {
+    if (newIndex >= paths.size()) {
         qDebug() << "Can not load next: index out of range:" << newIndex;
         return;
     }
@@ -144,8 +144,8 @@ void Compositor::paintGL() {
     
     const float elapsed = fadeTimer.isValid() ? fadeTimer.elapsed() / 1000.f : 0.f;
     const float elapsedNormalized = elapsed / fadeDuration;
-    *prevAlpha = 1.f - elapsedNormalized;
-    *currentAlpha = elapsedNormalized;
+    *prevAlpha = clamp(1.f - elapsedNormalized);
+    *currentAlpha = clamp(elapsedNormalized);
     
     if (elapsed >= fadeDuration) {
         // We are done fading
@@ -181,6 +181,7 @@ void Compositor::paintGL() {
 //                b = 1.f;
             
             MpvInterface *mpv = mpvInstances[i];
+            mpv->setProperty("volume", static_cast<int>(alpha * 100.f));
             
             glEnable(GL_TEXTURE_2D);
             glBindTexture(GL_TEXTURE_2D, mpv->getFbo()->texture());
