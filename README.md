@@ -26,3 +26,5 @@ I successfully compiled on Linux and Windows.
 * [x] Rotate images according to their EXIF data
 * [x] Do not throw away the playlist when it ends
 * [x] Load next file in background and blend to it when user/timer triggers "next"
+* [ ] Software volume controls
+* [ ] End credits

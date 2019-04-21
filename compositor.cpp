@@ -332,9 +332,13 @@ void Compositor::startNextTimer() {
     if (isImage(paths.at(index))) {
         nextTimer.start(imageDuration * 1000);
     } else {
-        const double videoLength = current->getProperty("playtime-remaining").toDouble();
-        const double epsilon = 0.1;
-        nextTimer.start((videoLength - getFadeDuration() - epsilon) * 1000);
+        const int videoLength = current->getProperty("playtime-remaining").toInt();
+        // Since playtime-remaining has no subsecond resolution, in the worst 
+        // case we would start the fade almost 1 second too late - prevent this
+        const double epsilon = 1.0;
+        const double startFadeIn = (double)videoLength - getFadeDuration() - epsilon;
+        qDebug() << "startFadeIn:" << startFadeIn << paths.at(index);
+        nextTimer.start(startFadeIn * 1000);
     }
 }
 
