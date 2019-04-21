@@ -40,6 +40,7 @@ void Compositor::reset() {
     currentDirPath.clear();
     index = -1;
     firstLoad = true;
+    firstLoadFade = true;
 }
 
 Compositor::~Compositor() {
@@ -204,10 +205,13 @@ void Compositor::paintGL() {
     // OpenGL contexts, so we have to switch back
     makeCurrent();
     
-    // Draw background with full opacity, volume decreases over time
-    const int otherVolume = (1.f - elapsedNormalized) * 100.f;
-    const float otherAlpha = 1.f;
-    drawMpvInstance(other, otherAlpha, otherVolume);
+    // On first load, fade in from black
+    if (!firstLoadFade) {
+        // Draw background with full opacity, volume decreases over time
+        const int otherVolume = (1.f - elapsedNormalized) * 100.f;
+        const float otherAlpha = 1.f;
+        drawMpvInstance(other, otherAlpha, otherVolume);
+    }
     
     // Fade to current image (opacity and volume increase over time)
     const int currentVolume = elapsedNormalized * 100.f;
@@ -221,6 +225,8 @@ void Compositor::paintGL() {
         next->setPaused(true);
         next->command_async(QVariantList() << "seek" << 0 << "absolute");
         fadeEndHandled = true;
+        
+        firstLoadFade = false;
     }
 }
 

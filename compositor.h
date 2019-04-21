@@ -76,6 +76,7 @@ private:
     // Slideshow management
     int index = -1; // Current index
     bool firstLoad = true;
+    bool firstLoadFade = true;
     QElapsedTimer fadeTimer;
     QTimer nextTimer;
     double fadeDuration = 1.0;

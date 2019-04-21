@@ -28,3 +28,5 @@ I successfully compiled on Linux and Windows.
 * [x] Load next file in background and blend to it when user/timer triggers "next"
 * [ ] Software volume controls
 * [ ] End credits
+* [ ] Toggle fullscreen
+* [ ] Hide cursor when not moved and outside the controls
