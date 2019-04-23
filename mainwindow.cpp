@@ -42,11 +42,9 @@ MainWindow::MainWindow(QWidget *parent)
     connect(ui->next, SIGNAL(released()), compositor, SLOT(nextFile()));
     connect(ui->imageDuration, SIGNAL(valueChanged(double)), compositor, SLOT(setImageDuration(double)));
     connect(ui->fadeDuration, SIGNAL(valueChanged(double)), compositor, SLOT(setFadeDuration(double)));
+    connect(ui->zoom, SIGNAL(valueChanged(int)), this, SLOT(convertZoom(int)));
+    connect(ui->compositor, SIGNAL(infoChanged(QString)), this, SLOT(setInfoText(QString)));
 //    connect(ui->videoSeekBar, SIGNAL(valueChanged(int)), slideshow, SLOT(seek(int)));
-    
-//    connect(mpv, SIGNAL(positionChanged(int)), this, SLOT(handleVideoPositionChange(int)));
-//    connect(mpv, SIGNAL(durationChanged(int)), this, SLOT(setSliderRange(int)));
-//    connect(mpv, SIGNAL(fileLoaded(QString)), slideshow, SLOT(handleFileLoaded(QString)));
     
     compositor->setImageDuration(ui->imageDuration->value());
     compositor->setFadeDuration(ui->fadeDuration->value());
@@ -98,14 +96,12 @@ void MainWindow::handleVideoPositionChange(int pos) {
     ui->videoSeekBar->blockSignals(false);
 }
 
+void MainWindow::setInfoText(const QString &text) {
+    ui->infoLabel->setText(text);
+}
+
 // Show a directory selection dialog and open the images in the chosen directory
 void MainWindow::openDialog() {
-    
-//    slideshow->openDir("/home/simon/Bilder/mpvslideshowteset");
-//    compositor->openDir("/home/simon/Bilder/mpvslideshowteset/marokko");
-    
-//    return;
-    
     QFileDialog dialog(this);
     dialog.setFileMode(QFileDialog::Directory);
     const QString currentDir = compositor->getCurrentDirPath();
@@ -121,6 +117,10 @@ void MainWindow::openDialog() {
     compositor->openDir(path);
     ui->togglePause->setText(tr("Start"));
     ui->bottomControls->show();
+}
+
+void MainWindow::convertZoom(int value) {
+    ui->compositor->setZoom((double)value / 100.0);
 }
 
 void MainWindow::mouseMoveEvent(QMouseEvent *event) {

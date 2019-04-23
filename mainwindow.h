@@ -24,12 +24,14 @@ public slots:
     void setSeekBarVisible(bool value);
     void setSliderRange(int duration);
     void handleVideoPositionChange(int pos);
+    void setInfoText(const QString &text);
     
 protected:
     void closeEvent(QCloseEvent *event);
     
 private slots:
     void openDialog();
+    void convertZoom(int value);
     
 protected:
     void mouseMoveEvent(QMouseEvent *event);

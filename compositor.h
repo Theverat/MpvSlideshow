@@ -35,15 +35,20 @@ public:
     bool togglePause();
     bool isImage(const QString &filepath) const;
     
+signals:
+    void infoChanged(const QString &text);
+    
 public slots:
     void previousFile();
     void nextFile();
     void setImageDuration(double seconds) {
         imageDuration = seconds;
+        updateInfo();
     }
     void setFadeDuration(double seconds) {
         fadeDuration = seconds;
     }
+    void setZoom(double value);
     
 protected:
     void initializeGL() Q_DECL_OVERRIDE;
@@ -66,6 +71,7 @@ private:
         return clamp(fadeDuration, 0.f, imageDuration);
     }
     void startFade(bool backwards);
+    void updateInfo();
     
     MainWindow *mainwindow;
     std::vector<MpvInterface*> mpvInstances;

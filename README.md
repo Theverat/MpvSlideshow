@@ -30,3 +30,4 @@ I successfully compiled on Linux and Windows.
 * [ ] End credits
 * [ ] Toggle fullscreen
 * [ ] Hide cursor when not moved and outside the controls
+* [ ] Maybe show indication of pause/resume when controls are not visible? (should be optional for experienced users)

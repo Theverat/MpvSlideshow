@@ -81,6 +81,7 @@ bool Compositor::togglePause() {
         nextTimer.stop();
     } else {
         startNextTimer();
+        update();
     }
     current->setPaused(paused);
     return paused;
@@ -125,6 +126,8 @@ void Compositor::previousFile() {
     if (!paused) {
         startNextTimer();
     }
+    
+    updateInfo();
 }
 
 void Compositor::nextFile() {
@@ -172,6 +175,14 @@ void Compositor::nextFile() {
     startFade(false);
     if (!paused)
         startNextTimer();
+    
+    updateInfo();
+}
+
+void Compositor::setZoom(double value) {
+    prev->setProperty("video-zoom", value);
+    current->setProperty("video-zoom", value);
+    next->setProperty("video-zoom", value);
 }
 
 //------------------------------------------------------------------
@@ -228,6 +239,8 @@ void Compositor::paintGL() {
         
         firstLoadFade = false;
     }
+    
+    qDebug() << "paintGL" << elapsed;
 }
 
 void Compositor::drawMpvInstance(MpvInterface *mpv, float alpha, int volume) {
@@ -246,16 +259,10 @@ void Compositor::swapped() {
     for (MpvInterface *mpv : mpvInstances) {
         mpv->swapped();
     }
-//    for (int i = 0; i < 3; ++i) {
-//        const float alpha = alphas[i];
-        
-//        if (alpha > 0.f) {
-//            MpvInterface *mpv = mpvInstances[i];
-//            mpv->swapped();
-//        }
-//    }
-    // Immediately schedule the next paintGL() call
-    update();
+    // Immediately schedule the next paintGL() call if necessary
+    const bool videoRunning = !isImage(paths.at(index)) && !current->isPaused();
+    if (videoRunning || !fadeEndHandled)
+        update();
 }
 
 // Make Qt invoke mpv_opengl_cb_draw() to draw a new/updated video frame.
@@ -352,4 +359,13 @@ void Compositor::startFade(bool backwards) {
     fadeBackwards = backwards;
     fadeTimer.start();
     fadeEndHandled = false;
+    update();
+}
+
+void Compositor::updateInfo() {
+    const int pos = index + 1;
+    const int total = paths.size();
+    emit infoChanged(QString("File %1 of %2")
+                     .arg(QString::number(pos), 
+                          QString::number(total)));
 }
