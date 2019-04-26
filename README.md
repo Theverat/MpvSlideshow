@@ -28,7 +28,7 @@ I successfully compiled on Linux and Windows.
 * [x] Load next file in background and blend to it when user/timer triggers "next"
 * [ ] Software volume controls
 * [ ] End credits
-* [ ] Toggle fullscreen
+* [x] Toggle fullscreen
 * [ ] Hide cursor when not moved and outside the controls
 * [ ] Maybe show indication of pause/resume when controls are not visible? (should be optional for experienced users)
 * [ ] Support all video/image types supported by MPV

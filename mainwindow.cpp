@@ -30,11 +30,13 @@ MainWindow::MainWindow(QWidget *parent)
     shortcutPrev = new QShortcut(QKeySequence(tr("Left", "Previous")), this);
     shortcutNext = new QShortcut(QKeySequence(tr("Right", "Next")), this);
     shortcutTogglePause = new QShortcut(QKeySequence(Qt::Key_Space), this);
+    shortcutEscape = new QShortcut(QKeySequence(Qt::Key_Escape), this);
     
     connect(shortcutOpen, SIGNAL(activated()), this, SLOT(openDialog()));
     connect(shortcutPrev, SIGNAL(activated()), compositor, SLOT(previousFile()));
     connect(shortcutNext, SIGNAL(activated()), compositor, SLOT(nextFile()));
     connect(shortcutTogglePause, SIGNAL(activated()), this, SLOT(togglePause()));
+    connect(shortcutEscape, SIGNAL(activated()), this, SLOT(handleEscape()));
     
     connect(ui->open, SIGNAL(released()), this, SLOT(openDialog()));
     connect(ui->prev, SIGNAL(released()), compositor, SLOT(previousFile()));
@@ -85,6 +87,10 @@ void MainWindow::handleVideoPositionChange(int pos) {
 //------------------------------------------------------------------
 // protected
 
+void MainWindow::showEvent(QShowEvent *) {
+    readSettings();
+}
+
 void MainWindow::closeEvent(QCloseEvent *event) {
     writeSettings();
     event->accept();
@@ -99,8 +105,8 @@ void MainWindow::mouseMoveEvent(QMouseEvent *event) {
     }
 }
 
-void MainWindow::showEvent(QShowEvent *) {
-    readSettings();
+void MainWindow::mouseDoubleClickEvent(QMouseEvent *) {
+    toggleFullscreen();
 }
 
 //------------------------------------------------------------------
@@ -141,6 +147,12 @@ void MainWindow::toggleFullscreen() {
 
 void MainWindow::setInfoText(const QString &text) {
     ui->infoLabel->setText(text);
+}
+
+void MainWindow::handleEscape() {
+    if (isFullScreen()) {
+        toggleFullscreen();
+    }
 }
 
 //------------------------------------------------------------------

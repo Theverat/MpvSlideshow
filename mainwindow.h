@@ -26,15 +26,17 @@ public slots:
     void handleVideoPositionChange(int pos);
     
 protected:
+    void showEvent(QShowEvent *);
     void closeEvent(QCloseEvent *event);
     void mouseMoveEvent(QMouseEvent *event);
-    void showEvent(QShowEvent *);
+    void mouseDoubleClickEvent(QMouseEvent *);
     
 private slots:
     void openDialog();
     void convertZoom(int value);
     void toggleFullscreen();
     void setInfoText(const QString &text);
+    void handleEscape();
     
 private:
     void writeSettings();
@@ -47,6 +49,7 @@ private:
     QShortcut *shortcutPrev;
     QShortcut *shortcutNext;
     QShortcut *shortcutTogglePause;
+    QShortcut *shortcutEscape;
 };
 
 #endif // MainWindow_H

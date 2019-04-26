@@ -11,13 +11,15 @@ HEADERS = \
     exifparser.h \
     compositor.h \
     mpvinterface.h \
-    autohidewidget.h
+    autohidewidget.h \
+    cursormanager.h
 SOURCES = main.cpp \
     mainwindow.cpp \
     exifparser.cpp \
     compositor.cpp \
     mpvinterface.cpp \
-    autohidewidget.cpp
+    autohidewidget.cpp \
+    cursormanager.cpp
 
 FORMS += \
     mainwindow.ui
