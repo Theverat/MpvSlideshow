@@ -189,6 +189,7 @@ void Compositor::setZoom(double value) {
     prev->setProperty("video-zoom", value);
     current->setProperty("video-zoom", value);
     next->setProperty("video-zoom", value);
+    update();
 }
 
 //------------------------------------------------------------------

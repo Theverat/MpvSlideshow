@@ -29,6 +29,6 @@ I successfully compiled on Linux and Windows.
 * [ ] Software volume controls
 * [ ] End credits
 * [x] Toggle fullscreen
-* [ ] Hide cursor when not moved and outside the controls
+* [x] Hide cursor when not moved and outside the controls
 * [ ] Maybe show indication of pause/resume when controls are not visible? (should be optional for experienced users)
 * [ ] Support all video/image types supported by MPV

@@ -37,6 +37,7 @@ private slots:
     void toggleFullscreen();
     void setInfoText(const QString &text);
     void handleEscape();
+    void hideCursor();
     
 private:
     void writeSettings();
@@ -50,6 +51,9 @@ private:
     QShortcut *shortcutNext;
     QShortcut *shortcutTogglePause;
     QShortcut *shortcutEscape;
+    
+    QTimer cursorHideTimer;
+    const int CURSOR_HIDE_TIME_MS = 500;
 };
 
 #endif // MainWindow_H

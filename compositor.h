@@ -85,10 +85,10 @@ private:
     bool firstLoadFade = true;
     QElapsedTimer fadeTimer;
     QTimer nextTimer;
-    double fadeDuration = 1.0;
+    double fadeDuration = 0.8;
     bool fadeBackwards = false;
     bool fadeEndHandled = false;
-    double imageDuration = 3.0;
+    double imageDuration = 8.0;
     QString currentDirPath;
     QStringList paths;
     bool paused = true;

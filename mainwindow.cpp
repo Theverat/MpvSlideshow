@@ -2,6 +2,7 @@
 #include "mainwindow.h"
 #include "ui_mainwindow.h"
 #include "sliderstyle.h"
+#include "cursormanager.h"
 
 #include <QPushButton>
 #include <QSlider>
@@ -25,6 +26,7 @@ MainWindow::MainWindow(QWidget *parent)
     setMouseTracking(true);
     ui->centralwidget->setMouseTracking(true);
     ui->compositor->setMouseTracking(true);
+    ui->bottomControls->setMouseTracking(true);
     
     shortcutOpen = new QShortcut(QKeySequence(tr("Ctrl+O", "Open")), this);
     shortcutPrev = new QShortcut(QKeySequence(tr("Left", "Previous")), this);
@@ -50,6 +52,9 @@ MainWindow::MainWindow(QWidget *parent)
     
     compositor->setImageDuration(ui->imageDuration->value());
     compositor->setFadeDuration(ui->fadeDuration->value());
+    
+    connect(&cursorHideTimer, SIGNAL(timeout()), this, SLOT(hideCursor()));
+    cursorHideTimer.setSingleShot(true);
 }
 
 MainWindow::~MainWindow() {
@@ -62,8 +67,11 @@ MainWindow::~MainWindow() {
 void MainWindow::togglePause() {
     const bool paused = compositor->togglePause();
     ui->togglePause->setText(paused ? tr("Resume") : tr("Pause"));
-    if (!paused)
+    if (!paused) {
+        qDebug() << "hiding bottom";
         ui->bottomControls->hide();
+        cursorHideTimer.start(CURSOR_HIDE_TIME_MS);
+    }
 }
 
 void MainWindow::setSeekBarVisible(bool value) {
@@ -100,8 +108,14 @@ void MainWindow::closeEvent(QCloseEvent *event) {
 }
 
 void MainWindow::mouseMoveEvent(QMouseEvent *event) {
+    CursorManager::showCursor();
+    
     if (ui->bottomControls->geometry().contains(event->pos())) {
         ui->bottomControls->show();
+        cursorHideTimer.stop();
+    } else {
+        // Only hide cursor if outside control area
+        cursorHideTimer.start(CURSOR_HIDE_TIME_MS);
     }
 }
 
@@ -139,7 +153,6 @@ void MainWindow::convertZoom(int value) {
 void MainWindow::toggleFullscreen() {
     if(isFullScreen()) {
         this->setWindowState(Qt::WindowNoState);
-//        CursorManager::showCursor();
     } else {
         this->setWindowState(Qt::WindowFullScreen);
     }
@@ -153,6 +166,11 @@ void MainWindow::handleEscape() {
     if (isFullScreen()) {
         toggleFullscreen();
     }
+}
+
+void MainWindow::hideCursor() {
+    qDebug() << "hiding cursor";
+    CursorManager::hideCursor();
 }
 
 //------------------------------------------------------------------
