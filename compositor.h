@@ -95,9 +95,6 @@ private:
     QStringList imageFormats;
     QStringList videoFormats;
     QStringList mediaNameFilter;
-    
-    // for debugging the stutter
-    QElapsedTimer betweenPaints;
 };
 
 #endif // COMPOSITOR_H

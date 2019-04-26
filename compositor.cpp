@@ -87,6 +87,12 @@ bool Compositor::togglePause() {
     return paused;
 }
 
+bool Compositor::isImage(const QString &filepath) const {
+    QFileInfo fileInfo(filepath);
+    const QString &extension = fileInfo.completeSuffix();
+    return imageFormats.contains(extension.toLower());
+}
+
 //------------------------------------------------------------------
 // public slots
 
@@ -239,8 +245,6 @@ void Compositor::paintGL() {
         
         firstLoadFade = false;
     }
-    
-    qDebug() << "paintGL" << elapsed;
 }
 
 void Compositor::drawMpvInstance(MpvInterface *mpv, float alpha, int volume) {
@@ -333,12 +337,6 @@ QStringList Compositor::getMediaFilesInDir(const QString &dirPath) const {
         entry = dirPath + QDir::separator() + entry;
     }
     return entryList;
-}
-
-bool Compositor::isImage(const QString &filepath) const {
-    QFileInfo fileInfo(filepath);
-    const QString &extension = fileInfo.completeSuffix();
-    return imageFormats.contains(extension.toLower());
 }
 
 void Compositor::startNextTimer() {
