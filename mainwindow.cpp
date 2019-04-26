@@ -68,20 +68,6 @@ void MainWindow::setSeekBarVisible(bool value) {
     ui->videoSeekBar->setVisible(value);
 }
 
-//------------------------------------------------------------------
-// protected
-
-void MainWindow::closeEvent(QCloseEvent *event) {
-    writeSettings();
-    event->accept();
-    
-    // Very dirty workaround for mpv hanging in destructor
-    throw std::runtime_error("quit this shit");
-}
-
-//------------------------------------------------------------------
-// private slots
-
 void MainWindow::setSliderRange(int duration) {
     ui->videoSeekBar->blockSignals(true);
     ui->videoSeekBar->setRange(0, duration);
@@ -96,12 +82,33 @@ void MainWindow::handleVideoPositionChange(int pos) {
     ui->videoSeekBar->blockSignals(false);
 }
 
-void MainWindow::setInfoText(const QString &text) {
-    ui->infoLabel->setText(text);
+//------------------------------------------------------------------
+// protected
+
+void MainWindow::closeEvent(QCloseEvent *event) {
+    writeSettings();
+    event->accept();
+    
+    // Very dirty workaround for mpv hanging in destructor
+    throw std::runtime_error("quit this shit");
 }
+
+void MainWindow::mouseMoveEvent(QMouseEvent *event) {
+    if (ui->bottomControls->geometry().contains(event->pos())) {
+        ui->bottomControls->show();
+    }
+}
+
+void MainWindow::showEvent(QShowEvent *) {
+    readSettings();
+}
+
+//------------------------------------------------------------------
+// private slots
 
 // Show a directory selection dialog and open the images in the chosen directory
 void MainWindow::openDialog() {
+    // TODO allow files as well (strip dir path in that case)
     QFileDialog dialog(this);
     dialog.setFileMode(QFileDialog::Directory);
     const QString currentDir = compositor->getCurrentDirPath();
@@ -123,15 +130,21 @@ void MainWindow::convertZoom(int value) {
     ui->compositor->setZoom((double)value / 100.0);
 }
 
-void MainWindow::mouseMoveEvent(QMouseEvent *event) {
-    if (ui->bottomControls->geometry().contains(event->pos())) {
-        ui->bottomControls->show();
+void MainWindow::toggleFullscreen() {
+    if(isFullScreen()) {
+        this->setWindowState(Qt::WindowNoState);
+//        CursorManager::showCursor();
+    } else {
+        this->setWindowState(Qt::WindowFullScreen);
     }
 }
 
-void MainWindow::showEvent(QShowEvent *) {
-    readSettings();
+void MainWindow::setInfoText(const QString &text) {
+    ui->infoLabel->setText(text);
 }
+
+//------------------------------------------------------------------
+// private
 
 void MainWindow::writeSettings() {
     QSettings qsettings("simon", "mpvslideshow");
