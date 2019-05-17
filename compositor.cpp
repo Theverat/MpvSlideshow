@@ -264,10 +264,12 @@ void Compositor::swapped() {
     for (MpvInterface *mpv : mpvInstances) {
         mpv->swapped();
     }
-    // Immediately schedule the next paintGL() call if necessary
-    const bool videoRunning = !isImage(paths.at(index)) && !current->isPaused();
-    if (videoRunning || !fadeEndHandled)
-        update();
+    if (paths.size() > 0) {
+        // Immediately schedule the next paintGL() call if necessary
+        const bool videoRunning = !isImage(paths.at(index)) && !current->isPaused();
+        if (videoRunning || !fadeEndHandled)
+            update();
+    }
 }
 
 // Make Qt invoke mpv_opengl_cb_draw() to draw a new/updated video frame.
