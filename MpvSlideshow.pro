@@ -1,9 +1,17 @@
 CONFIG -= app_bundle
 QT += widgets
 
-QT_CONFIG -= no-pkg-config
-CONFIG += link_pkgconfig debug
-PKGCONFIG += mpv
+unix {
+    QT_CONFIG -= no-pkg-config
+    CONFIG += link_pkgconfig
+    PKGCONFIG += mpv
+}
+
+win32 {
+    INCLUDEPATH += "$$PWD/mpv/include"
+    LIBS += -L"$$PWD/mpv/win/x86_64" -llibmpv
+    LIBS += -lopengl32
+}
 
 HEADERS = \
     mainwindow.h \
@@ -12,7 +20,8 @@ HEADERS = \
     compositor.h \
     mpvinterface.h \
     autohidewidget.h \
-    cursormanager.h
+    cursormanager.h \
+    qthelper.h
 SOURCES = main.cpp \
     mainwindow.cpp \
     exifparser.cpp \

@@ -7,7 +7,7 @@
 
 #include <mpv/client.h>
 #include <mpv/opengl_cb.h>
-#include <mpv/qthelper.hpp>
+#include "qthelper.h"
 
 
 class MpvInterface : public QObject
