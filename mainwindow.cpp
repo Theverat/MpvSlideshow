@@ -128,6 +128,9 @@ void MainWindow::mouseDoubleClickEvent(QMouseEvent *) {
 
 // Show a directory selection dialog and open the images in the chosen directory
 void MainWindow::openDialog() {
+    cursorHideTimer.stop();
+    CursorManager::showCursor();
+
     // TODO allow files as well (strip dir path in that case)
     QFileDialog dialog(this);
     dialog.setFileMode(QFileDialog::Directory);
