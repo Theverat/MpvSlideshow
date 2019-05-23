@@ -102,9 +102,6 @@ void MainWindow::showEvent(QShowEvent *) {
 void MainWindow::closeEvent(QCloseEvent *event) {
     writeSettings();
     event->accept();
-    
-    // Very dirty workaround for mpv hanging in destructor
-    throw std::runtime_error("quit this shit");
 }
 
 void MainWindow::mouseMoveEvent(QMouseEvent *event) {
